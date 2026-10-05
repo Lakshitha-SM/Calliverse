@@ -12,6 +12,10 @@ app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', creden
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+const path = require('path');
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
@@ -22,6 +26,7 @@ app.use('/api/recommendations', require('./routes/recommendations'));
 app.use('/api/courses', require('./routes/courses'));
 app.use('/api/lessons', require('./routes/lessons'));
 app.use('/api/exercises', require('./routes/exercises'));
+app.use('/api/practice', require('./routes/practice'));
 
 app.get('/', (req, res) => res.json({ message: 'CalliVerse API Running ✨' }));
 
