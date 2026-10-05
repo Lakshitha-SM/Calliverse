@@ -19,6 +19,9 @@ app.use('/api/designs', require('./routes/designs'));
 app.use('/api/community', require('./routes/community'));
 app.use('/api/progress', require('./routes/progress'));
 app.use('/api/recommendations', require('./routes/recommendations'));
+app.use('/api/courses', require('./routes/courses'));
+app.use('/api/lessons', require('./routes/lessons'));
+app.use('/api/exercises', require('./routes/exercises'));
 
 app.get('/', (req, res) => res.json({ message: 'CalliVerse API Running ✨' }));
 

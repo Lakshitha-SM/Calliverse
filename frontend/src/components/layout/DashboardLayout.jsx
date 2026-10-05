@@ -16,7 +16,11 @@ import {
   X,
   Sun,
   Moon,
-  Sparkles
+  Sparkles,
+  Compass,
+  User,
+  GraduationCap,
+  Crown
 } from 'lucide-react'
 
 export default function DashboardLayout() {
@@ -30,6 +34,7 @@ export default function DashboardLayout() {
 
   const menuItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { name: 'Learning Paths', path: '/courses', icon: Compass },
     { name: 'Practice Lab', path: '/practice', icon: BookOpen },
     { name: 'Design Canvas', path: '/canvas', icon: Paintbrush },
     { name: 'Progress & AI', path: '/progress', icon: TrendingUp },

@@ -132,34 +132,44 @@ export default function Dashboard() {
           {/* Quick Actions */}
           <div className="space-y-4">
             <h2 className="section-title">Quick Studio Actions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Link to="/canvas" className="p-5 rounded-2xl bg-neutral-900 border border-amber-900/15 hover:border-amber-500/40 hover:bg-neutral-900/80 transition-all duration-300 flex flex-col justify-between h-36 relative group overflow-hidden">
-                <div className="absolute right-3 top-3 p-2 rounded-lg bg-amber-500/10 text-amber-400 group-hover:scale-110 transition-transform">
-                  <ArrowUpRight className="w-5 h-5" />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Link to="/courses" className="p-4 rounded-2xl bg-neutral-900 border border-amber-900/15 hover:border-amber-500/40 hover:bg-neutral-900/80 transition-all duration-300 flex flex-col justify-between h-32 relative group overflow-hidden">
+                <div className="absolute right-3 top-3 p-1.5 rounded-lg bg-amber-500/10 text-amber-400 group-hover:scale-110 transition-transform">
+                  <Compass className="w-4 h-4" />
                 </div>
-                <div className="pt-8">
-                  <h3 className="text-base font-semibold font-display text-neutral-200">Open Canvas</h3>
-                  <p className="text-xs text-neutral-400 mt-1">Start drawing calligraphy strokes</p>
-                </div>
-              </Link>
-
-              <Link to="/practice" className="p-5 rounded-2xl bg-neutral-900 border border-amber-900/15 hover:border-amber-500/40 hover:bg-neutral-900/80 transition-all duration-300 flex flex-col justify-between h-36 relative group overflow-hidden">
-                <div className="absolute right-3 top-3 p-2 rounded-lg bg-amber-500/10 text-amber-400 group-hover:scale-110 transition-transform">
-                  <BookOpen className="w-5 h-5" />
-                </div>
-                <div className="pt-8">
-                  <h3 className="text-base font-semibold font-display text-neutral-200">Practice Mode</h3>
-                  <p className="text-xs text-neutral-400 mt-1">Guided trace & stroke practices</p>
+                <div className="pt-6">
+                  <h3 className="text-sm font-semibold font-display text-neutral-200">Learning Paths</h3>
+                  <p className="text-[10px] text-neutral-400 mt-0.5">Explore structured curricula</p>
                 </div>
               </Link>
 
-              <Link to="/fonts" className="p-5 rounded-2xl bg-neutral-900 border border-amber-900/15 hover:border-amber-500/40 hover:bg-neutral-900/80 transition-all duration-300 flex flex-col justify-between h-36 relative group overflow-hidden">
-                <div className="absolute right-3 top-3 p-2 rounded-lg bg-amber-500/10 text-amber-400 group-hover:scale-110 transition-transform">
-                  <Sparkles className="w-5 h-5" />
+              <Link to="/practice" className="p-4 rounded-2xl bg-neutral-900 border border-amber-900/15 hover:border-amber-500/40 hover:bg-neutral-900/80 transition-all duration-300 flex flex-col justify-between h-32 relative group overflow-hidden">
+                <div className="absolute right-3 top-3 p-1.5 rounded-lg bg-amber-500/10 text-amber-400 group-hover:scale-110 transition-transform">
+                  <BookOpen className="w-4 h-4" />
                 </div>
-                <div className="pt-8">
-                  <h3 className="text-base font-semibold font-display text-neutral-200">Style Preview</h3>
-                  <p className="text-xs text-neutral-400 mt-1">Test aesthetic font styling instantly</p>
+                <div className="pt-6">
+                  <h3 className="text-sm font-semibold font-display text-neutral-200">Practice Lab</h3>
+                  <p className="text-[10px] text-neutral-400 mt-0.5">Guided trace & drills</p>
+                </div>
+              </Link>
+
+              <Link to="/canvas" className="p-4 rounded-2xl bg-neutral-900 border border-amber-900/15 hover:border-amber-500/40 hover:bg-neutral-900/80 transition-all duration-300 flex flex-col justify-between h-32 relative group overflow-hidden">
+                <div className="absolute right-3 top-3 p-1.5 rounded-lg bg-amber-500/10 text-amber-400 group-hover:scale-110 transition-transform">
+                  <ArrowUpRight className="w-4 h-4" />
+                </div>
+                <div className="pt-6">
+                  <h3 className="text-sm font-semibold font-display text-neutral-200">Open Canvas</h3>
+                  <p className="text-[10px] text-neutral-400 mt-0.5">Freehand ink studio</p>
+                </div>
+              </Link>
+
+              <Link to="/fonts" className="p-4 rounded-2xl bg-neutral-900 border border-amber-900/15 hover:border-amber-500/40 hover:bg-neutral-900/80 transition-all duration-300 flex flex-col justify-between h-32 relative group overflow-hidden">
+                <div className="absolute right-3 top-3 p-1.5 rounded-lg bg-amber-500/10 text-amber-400 group-hover:scale-110 transition-transform">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div className="pt-6">
+                  <h3 className="text-sm font-semibold font-display text-neutral-200">Style Preview</h3>
+                  <p className="text-[10px] text-neutral-400 mt-0.5">Realtime font test</p>
                 </div>
               </Link>
             </div>

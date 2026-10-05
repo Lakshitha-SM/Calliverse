@@ -17,6 +17,9 @@ import Portfolio  from './pages/Portfolio'
 import FontPreview from './pages/FontPreview'
 import QRArtwork  from './pages/QRArtwork'
 import Profile    from './pages/Profile'
+import CoursesCatalog from './pages/Courses/CoursesCatalog'
+import CourseDetail   from './pages/Courses/CourseDetail'
+import LessonView     from './pages/Courses/LessonView'
 import MentorStudio from './pages/Mentor/MentorStudio'
 import AdminConsole from './pages/Admin/AdminConsole'
 import DashboardLayout from './components/layout/DashboardLayout'
@@ -85,6 +88,9 @@ export default function App() {
             {/* Protected — Dashboard layout */}
             <Route element={<PrivateRoute><DashboardLayout /></PrivateRoute>}>
               <Route path="/dashboard"   element={<Dashboard />} />
+              <Route path="/courses"     element={<CoursesCatalog />} />
+              <Route path="/courses/:idOrSlug" element={<CourseDetail />} />
+              <Route path="/lessons/:idOrSlug" element={<LessonView />} />
               <Route path="/canvas"      element={<Canvas />} />
               <Route path="/canvas/:id"  element={<Canvas />} />
               <Route path="/templates"   element={<Templates />} />
