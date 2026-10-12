@@ -8,11 +8,16 @@ dist/
 frontend/dist/
 build/
 
-# Environment Variables
-.env.local
-.env.*.local
+# Environment Variables & Secrets (Keep .env.example)
+.env
+.env.*
+*.env
+backend/.env
+!*.env.example
+!.env.example
 
-# Logs
+# Logs & Diagnostics
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -28,3 +33,8 @@ Thumbs.db
 *.ntvs*
 *.njsproj
 *.sln
+
+# Backup & Temporary Report Files
+*.bak
+*.tmp
+CalliLab_Source_Code.zip

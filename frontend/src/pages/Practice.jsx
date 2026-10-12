@@ -1,239 +1,457 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { 
-  BookOpen, 
-  Sparkles, 
+  PenTool, 
   Paintbrush, 
-  UploadCloud, 
-  RotateCcw, 
-  Undo, 
-  Redo, 
+  Eraser, 
+  Undo2, 
+  Redo2, 
   Trash2, 
-  Eye, 
-  EyeOff, 
-  Sliders, 
-  Award, 
-  CheckCircle2, 
-  Camera, 
-  Layers, 
-  SplitSquareVertical, 
-  History, 
-  Flame, 
-  Download,
-  Save,
-  Check,
-  Zap,
-  MousePointer,
-  HelpCircle
+  Clock, 
+  ArrowRight,
+  Sliders,
+  CheckCircle2,
+  Play,
+  Pause,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+  Award,
+  Flame,
+  X,
+  Target,
+  Leaf,
+  Info
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import axios from 'axios'
 import { useAuth } from '../context/AuthContext'
 
+// ── DRILL CATALOG ─────────────────────────────────────────────────────────────
+const DRILL_CATALOG = [
+  {
+    id: 'drill-a',
+    target: 'a',
+    title: "Lowercase 'a'",
+    category: 'Letter Formation',
+    difficulty: 'Beginner',
+    duration: '10 mins',
+    durationSec: 600,
+    objective: 'Master the oval enclosure and teardrop entry at consistent 55° slant.',
+    tips: 'Begin with a hairline entry stroke, swell on the downstroke, then smoothly connect the exit.'
+  },
+  {
+    id: 'drill-b',
+    target: 'b',
+    title: "Lowercase 'b'",
+    category: 'Ascender Loops',
+    difficulty: 'Beginner',
+    duration: '12 mins',
+    durationSec: 720,
+    objective: 'Form an elongated 55° ascender loop transitioning cleanly into the base bowl.',
+    tips: 'Keep the ascending loop delicate and light; apply firm pressure only on the main downstroke.'
+  },
+  {
+    id: 'drill-c',
+    target: 'c',
+    title: "Lowercase 'c'",
+    category: 'Letter Formation',
+    difficulty: 'Beginner',
+    duration: '8 mins',
+    durationSec: 480,
+    objective: 'Refine the classic teardrop entry terminal and open oval curvature.',
+    tips: 'Leave ample internal counter-space for clear legibility and rhythm.'
+  },
+  {
+    id: 'drill-d',
+    target: 'd',
+    title: "Lowercase 'd'",
+    category: 'Ascender Loops',
+    difficulty: 'Beginner',
+    duration: '10 mins',
+    durationSec: 600,
+    objective: 'Harmonize an oval letterform with a tall straight ascending stem.',
+    tips: 'The ascender should reach the ascender guide line without wavering.'
+  },
+  {
+    id: 'drill-minimum',
+    target: 'minimum',
+    title: "Word 'minimum'",
+    category: 'Spacing & Rhythm',
+    difficulty: 'Intermediate',
+    duration: '15 mins',
+    durationSec: 900,
+    objective: 'Achieve exact equal spacing between consecutive downstrokes.',
+    tips: 'The ultimate rhythm exercise: every downstroke and counter-space must be identical.'
+  },
+  {
+    id: 'drill-underturn',
+    target: 'Underturn',
+    title: "Basic Underturn",
+    category: 'Basic Strokes',
+    difficulty: 'Beginner',
+    duration: '8 mins',
+    durationSec: 480,
+    objective: 'Modulate pressure from a thick downstroke into a hairline upward curve.',
+    tips: 'Release pen pressure just before reaching the baseline to curl gracefully upward.'
+  },
+  {
+    id: 'drill-grace',
+    target: 'Grace',
+    title: "Flourished 'Grace'",
+    category: 'Flourishing',
+    difficulty: 'Advanced',
+    duration: '20 mins',
+    durationSec: 1200,
+    objective: 'Balance expressive flourishes with foundational letterforms.',
+    tips: 'Anchor the word on the baseline before extending soaring loop flourishes.'
+  }
+]
+
+// ── CHARACTER CATEGORIES ──────────────────────────────────────────────────────
+const CHARACTER_CATEGORIES = [
+  { id: 'lowercase', label: 'Lowercase', items: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'] },
+  { id: 'uppercase', label: 'Uppercase', items: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'] },
+  { id: 'numbers', label: 'Numbers', items: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] },
+  { id: 'words', label: 'Words', items: ['minimum', 'calligraphy', 'flourish', 'artisan', 'harmony', 'rhythm', 'grace'] },
+  { id: 'basic_strokes', label: 'Basic Strokes', items: ['Underturn', 'Overturn', 'Ascending Loop', 'Descending Loop', 'Compound Curve', 'Oval'] },
+  { id: 'connectors', label: 'Connectors', items: ['Entry Stroke', 'Exit Hairline', 'High Connector', 'Crossbar'] },
+  { id: 'flourishes', label: 'Flourishes', items: ['Ascender Loop', 'Descender Swash', 'Terminal Sweep', 'Figure-8'] },
+]
+
+// ── INK PALETTE ───────────────────────────────────────────────────────────────
+const INK_PALETTE = [
+  { name: 'Lamp Black', color: '#171513' },
+  { name: 'Warm Walnut', color: '#6B5140' },
+  { name: 'Terracotta Rose', color: '#A85D55' },
+  { name: 'Deep Burgundy', color: '#642F35' },
+  { name: 'Antique Gold', color: '#B49A68' },
+]
+
 export default function Practice() {
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const { user, updateUser } = useAuth()
 
-  // Practice Modes: 'canvas' | 'upload' | 'compare'
-  const [activeTab, setActiveTab] = useState('canvas')
-  
-  // Target Reference Letter or Word
+  // ── Drill & Target State ──
   const initialRef = searchParams.get('ref') || 'a'
-  const [targetReference, setTargetReference] = useState(initialRef)
-  const [customInput, setCustomInput] = useState('')
+  const [selectedDrill, setSelectedDrill] = useState(() => {
+    return DRILL_CATALOG.find(d => d.target === initialRef) || DRILL_CATALOG[0]
+  })
+  const [drillDropdownOpen, setDrillDropdownOpen] = useState(false)
+  const [activeCategory, setActiveCategory] = useState('lowercase')
+  const [selectedCharacter, setSelectedCharacter] = useState(initialRef)
 
-  // Guidelines Visibility States
-  const [showGuidelines, setShowGuidelines] = useState(true)
-  const [showSlantGuides, setShowSlantGuides] = useState(true)
-  const [showTraceUnderlay, setShowTraceUnderlay] = useState(true)
-  const [traceOpacity, setTraceOpacity] = useState(0.2) // 10% to 60%
-  const [showGrid, setShowGrid] = useState(false)
+  // ── Tool & Ink Settings ──
+  const [tool, setTool] = useState('pen') // 'pen' | 'brush' | 'eraser'
+  const [brushSize, setBrushSize] = useState(4)
+  const [inkColor, setInkColor] = useState('#171513')
 
-  // Brush & Tool Settings
-  const [tool, setTool] = useState('pen') // 'pen' | 'brush' | 'chisel' | 'eraser'
-  const [brushSize, setBrushSize] = useState(5)
-  const [inkColor, setInkColor] = useState('#1A1714') // Lamp Black default
-  const [paperTexture, setPaperTexture] = useState('parchment') // parchment, linen, rice, slate
+  // ── Guide & Reference Settings ──
+  const [guidePreset, setGuidePreset] = useState('slant') // 'none' | 'lines' | 'grid' | 'slant' | 'full'
+  const [slantGuideActive, setSlantGuideActive] = useState(true)
+  const [showReference, setShowReference] = useState(true)
+  const [tracingMode, setTracingMode] = useState(false)
+  const [referenceOpacity, setReferenceOpacity] = useState(0.25)
 
-  // Upload state
-  const [uploadFile, setUploadFile] = useState(null)
-  const [uploadPreview, setUploadPreview] = useState(null)
-  const [uploading, setUploading] = useState(false)
+  // ── Timer State ── starts paused, auto-starts on first stroke
+  const [timerRunning, setTimerRunning] = useState(false)
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
+  const timerStartedRef = useRef(false)
 
-  // History & Attempts
-  const [previousAttempts, setPreviousAttempts] = useState([])
-  const [selectedAttemptForCompare, setSelectedAttemptForCompare] = useState(null)
-  const [savingAttempt, setSavingAttempt] = useState(false)
+  useEffect(() => {
+    if (!timerRunning) return
+    const interval = setInterval(() => {
+      setElapsedSeconds(prev => prev + 1)
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [timerRunning])
 
-  // Canvas drawing state & refs
-  const canvasRef = useRef(null)
-  const isDrawingRef = useRef(false)
-  const lastPointRef = useRef({ x: 0, y: 0, time: 0, speed: 0 })
-  const undoStackRef = useRef([])
-  const redoStackRef = useRef([])
-
-  const quickLetters = [
-    { label: '| (Downstroke)', val: '|' },
-    { label: '/ (Upstroke)', val: '/' },
-    { label: 'a', val: 'a' },
-    { label: 'b', val: 'b' },
-    { label: 'c', val: 'c' },
-    { label: 'd', val: 'd' },
-    { label: 'g', val: 'g' },
-    { label: 'm', val: 'm' },
-    { label: 's', val: 's' },
-    { label: 'minimum', val: 'minimum' },
-    { label: 'Breathe', val: 'Breathe' },
-    { label: 'Grace', val: 'Grace' },
-  ]
-
-  const inkPalettes = [
-    { id: 'lamp-black', name: 'Lamp Black', color: '#1A1714' },
-    { id: 'rich-gold', name: 'Gold Dust', color: '#C9A96E' },
-    { id: 'vermilion', name: 'Vermilion', color: '#B83B26' },
-    { id: 'prussian-blue', name: 'Prussian Blue', color: '#1B3B6F' },
-    { id: 'walnut-sepia', name: 'Walnut Sepia', color: '#5C4033' },
-  ]
-
-  // Paper backgrounds
-  const textures = {
-    parchment: '#F2ECE0',
-    linen: '#FAF7F2',
-    rice: '#EAE5D9',
-    slate: '#1E1B18'
+  const formatTime = (secs) => {
+    const m = Math.floor(secs / 60)
+    const s = secs % 60
+    return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`
   }
 
-  // Fetch previous attempts for the active target reference
-  const fetchAttempts = useCallback(async (refChar) => {
-    try {
-      const res = await axios.get(`/api/practice/attempts?targetReference=${encodeURIComponent(refChar)}`)
-      setPreviousAttempts(res.data || [])
-      if (res.data && res.data.length > 0) {
-        setSelectedAttemptForCompare(res.data[0])
-      }
-    } catch {
-      setPreviousAttempts([])
+  // ── Canvas Drawing Engine Refs ──
+  const canvasRef = useRef(null)
+  const isDrawingRef = useRef(false)
+  const lastPointRef = useRef({ x: 0, y: 0, time: 0, pressure: 0.5 })
+  const strokeHistoryRef = useRef([])
+  const redoHistoryRef = useRef([])
+  const [strokeCount, setStrokeCount] = useState(0)
+  const [canUndo, setCanUndo] = useState(false)
+  const [canRedo, setCanRedo] = useState(false)
+
+  // ── Dialogs & Assessment State ──
+  const [clearDialogOpen, setClearDialogOpen] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submissionStep, setSubmissionStep] = useState('') // 'capturing' | 'analyzing' | 'scoring'
+  const [assessmentModalData, setAssessmentModalData] = useState(null)
+  const [drillInfoOpen, setDrillInfoOpen] = useState(false)
+
+  // Horizontal scroll container ref for character cards
+  const charScrollRef = useRef(null)
+
+  // ── Canvas Setup & Responsive Sizing ──
+  const canvasReadyRef = useRef(false)
+
+  const initCanvas = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const parent = canvas.parentElement
+    if (!parent) return
+
+    const dpr = window.devicePixelRatio || 1
+    const rect = parent.getBoundingClientRect()
+    if (rect.width === 0 || rect.height === 0) return
+    
+    // Preserve existing drawing across resize
+    let existingImage = null
+    if (canvasReadyRef.current && canvas.width > 0 && canvas.height > 0) {
+      try { existingImage = canvas.toDataURL('image/png') } catch (_) {}
+    }
+
+    canvas.width  = Math.round(rect.width  * dpr)
+    canvas.height = Math.round(rect.height * dpr)
+    canvas.style.width  = `${rect.width}px`
+    canvas.style.height = `${rect.height}px`
+
+    const ctx = canvas.getContext('2d')
+    ctx.scale(dpr, dpr)
+
+    if (existingImage) {
+      const img = new Image()
+      img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height)
+      img.src = existingImage
+    } else {
+      // Snapshot initial blank state
+      strokeHistoryRef.current = [ctx.getImageData(0, 0, canvas.width, canvas.height)]
+      redoHistoryRef.current = []
+      setCanUndo(false)
+      setCanRedo(false)
+      canvasReadyRef.current = true
     }
   }, [])
 
   useEffect(() => {
-    fetchAttempts(targetReference)
-  }, [targetReference, fetchAttempts])
+    const t = setTimeout(initCanvas, 60)
+    window.addEventListener('resize', initCanvas)
+    return () => { clearTimeout(t); window.removeEventListener('resize', initCanvas) }
+  }, [initCanvas])
 
-  // Canvas Initialization & Resizing
+  // Restore draft + reset canvas when character changes
+  const prevCharRef = useRef(selectedCharacter)
   useEffect(() => {
+    if (prevCharRef.current === selectedCharacter) return
+    prevCharRef.current = selectedCharacter
+    // Reset canvas for new character
     const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
+    if (canvas) {
+      const ctx = canvas.getContext('2d')
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      strokeHistoryRef.current = [ctx.getImageData(0, 0, canvas.width, canvas.height)]
+      redoHistoryRef.current = []
+      setCanUndo(false)
+      setCanRedo(false)
+      setStrokeCount(0)
+      // Reset timer
+      setElapsedSeconds(0)
+      setTimerRunning(false)
+      timerStartedRef.current = false
+      // Try to restore draft for this character after a short delay
+      setTimeout(() => {
+        try {
+          const saved = sessionStorage.getItem(`callilab_draft_${selectedCharacter}`)
+          if (saved && canvasRef.current) {
+            const c = canvasRef.current
+            const cx = c.getContext('2d')
+            const img = new Image()
+            img.onload = () => {
+              const r = c.getBoundingClientRect()
+              cx.drawImage(img, 0, 0, r.width, r.height)
+              strokeHistoryRef.current.push(cx.getImageData(0, 0, c.width, c.height))
+              setCanUndo(true)
+              setStrokeCount(1)
+            }
+            img.src = saved
+          }
+        } catch (_) {}
+      }, 80)
+    }
+  }, [selectedCharacter])
 
-    // High-DPI screen sharp rendering
-    const dpr = window.devicePixelRatio || 1
-    const rect = canvas.getBoundingClientRect()
-    canvas.width = rect.width * dpr
-    canvas.height = rect.height * dpr
-    ctx.scale(dpr, dpr)
+  // ── Keyboard Shortcuts (Ctrl+Z, Ctrl+Y, P, B, E) ──
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault(); handleUndo()
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault(); handleRedo()
+      } else if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (e.key === 'p') setTool('pen')
+        if (e.key === 'b') setTool('brush')
+        if (e.key === 'e') setTool('eraser')
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
 
-    // Save initial blank canvas snapshot
-    const initialSnap = ctx.getImageData(0, 0, canvas.width, canvas.height)
-    undoStackRef.current = [initialSnap]
-    redoStackRef.current = []
-  }, [])
-
-  // Push Canvas snapshot to Undo stack
+  // ── Push Canvas State for Undo / Redo ──
   const pushCanvasState = () => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     const snap = ctx.getImageData(0, 0, canvas.width, canvas.height)
-    undoStackRef.current.push(snap)
-    if (undoStackRef.current.length > 25) undoStackRef.current.shift()
-    redoStackRef.current = []
+    strokeHistoryRef.current.push(snap)
+    if (strokeHistoryRef.current.length > 30) strokeHistoryRef.current.shift()
+    redoHistoryRef.current = []
+    setCanUndo(strokeHistoryRef.current.length > 1)
+    setCanRedo(false)
+    setStrokeCount(prev => prev + 1)
+
+    // Auto save draft to session
+    try {
+      sessionStorage.setItem(`callilab_draft_${selectedCharacter}`, canvas.toDataURL('image/png'))
+    } catch (_) {}
   }
 
-  // Handle Undo
   const handleUndo = () => {
     const canvas = canvasRef.current
-    if (!canvas || undoStackRef.current.length <= 1) {
-      toast.error('Nothing to undo')
-      return
-    }
+    if (!canvas || strokeHistoryRef.current.length <= 1) return
     const ctx = canvas.getContext('2d')
-    const current = undoStackRef.current.pop()
-    redoStackRef.current.push(current)
-    const prev = undoStackRef.current[undoStackRef.current.length - 1]
+    const current = strokeHistoryRef.current.pop()
+    redoHistoryRef.current.push(current)
+    const prev = strokeHistoryRef.current[strokeHistoryRef.current.length - 1]
     ctx.putImageData(prev, 0, 0)
+    setCanUndo(strokeHistoryRef.current.length > 1)
+    setCanRedo(true)
+    setStrokeCount(s => Math.max(0, s - 1))
   }
 
-  // Handle Redo
   const handleRedo = () => {
     const canvas = canvasRef.current
-    if (!canvas || redoStackRef.current.length === 0) {
-      toast.error('Nothing to redo')
-      return
-    }
+    if (!canvas || redoHistoryRef.current.length === 0) return
     const ctx = canvas.getContext('2d')
-    const next = redoStackRef.current.pop()
-    undoStackRef.current.push(next)
+    const next = redoHistoryRef.current.pop()
+    strokeHistoryRef.current.push(next)
     ctx.putImageData(next, 0, 0)
+    setCanUndo(true)
+    setCanRedo(redoHistoryRef.current.length > 0)
+    setStrokeCount(s => s + 1)
   }
 
-  // Clear Canvas
-  const handleClear = () => {
+  const handleClearConfirm = () => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    pushCanvasState()
-    toast.success('Practice canvas cleared')
+    strokeHistoryRef.current = [ctx.getImageData(0, 0, canvas.width, canvas.height)]
+    redoHistoryRef.current = []
+    setCanUndo(false)
+    setCanRedo(false)
+    setStrokeCount(0)
+    // Reset timer for fresh practice
+    setElapsedSeconds(0)
+    setTimerRunning(false)
+    timerStartedRef.current = false
+    setClearDialogOpen(false)
+    try {
+      sessionStorage.removeItem(`callilab_draft_${selectedCharacter}`)
+    } catch (_) {}
+    toast.success('Parchment cleared — ready for a fresh start.')
   }
 
-  // Mouse & Touch Coordinates Helper
-  const getCanvasCoords = (e) => {
+  // ── Coordinates Helper with Pressure Support ──
+  const getCoordinates = (e) => {
     const canvas = canvasRef.current
+    if (!canvas) return { x: 0, y: 0, time: Date.now(), pressure: 0.5 }
     const rect = canvas.getBoundingClientRect()
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY
+    let clientX = e.clientX
+    let clientY = e.clientY
+    let pressure = e.pressure !== undefined && e.pressure > 0 ? e.pressure : 0.5
+
+    if (e.touches && e.touches.length > 0) {
+      clientX = e.touches[0].clientX
+      clientY = e.touches[0].clientY
+      if (e.touches[0].force !== undefined && e.touches[0].force > 0) {
+        pressure = e.touches[0].force
+      }
+    }
+
     return {
       x: clientX - rect.left,
       y: clientY - rect.top,
-      time: Date.now()
+      time: Date.now(),
+      pressure
     }
   }
 
-  // Start Drawing
+  // ── Drawing Event Handlers ──
   const startDrawing = (e) => {
-    const coords = getCanvasCoords(e)
+    if (e.type === 'mousedown' && e.button !== 0) return // only left mouse button
+    if (e.type === 'touchstart') e.preventDefault()
     isDrawingRef.current = true
-    lastPointRef.current = coords
-  }
 
-  // Dynamic Calligraphy Stroke Smoothing & Pressure Simulation
-  const draw = (e) => {
-    if (!isDrawingRef.current) return
+    // Auto-start timer on very first stroke
+    if (!timerStartedRef.current) {
+      timerStartedRef.current = true
+      setTimerRunning(true)
+    }
+
+    const coords = getCoordinates(e)
+    lastPointRef.current = coords
+
+    // Draw single dot on click
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
+    ctx.save()
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
 
-    const currentCoords = getCanvasCoords(e)
+    if (tool === 'eraser') {
+      ctx.globalCompositeOperation = 'destination-out'
+      ctx.beginPath()
+      ctx.arc(coords.x, coords.y, Math.max(4, brushSize * 2.5), 0, Math.PI * 2)
+      ctx.fill()
+    } else {
+      ctx.globalCompositeOperation = 'source-over'
+      ctx.fillStyle = inkColor
+      ctx.beginPath()
+      ctx.arc(coords.x, coords.y, Math.max(0.5, brushSize / 2), 0, Math.PI * 2)
+      ctx.fill()
+    }
+    ctx.restore()
+  }
+
+  const draw = (e) => {
+    if (!isDrawingRef.current) return
+    if (e.type === 'touchmove') e.preventDefault()
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    const current = getCoordinates(e)
     const prev = lastPointRef.current
 
-    // Calculate velocity for natural pressure simulation
-    const dist = Math.hypot(currentCoords.x - prev.x, currentCoords.y - prev.y)
-    const timeDiff = Math.max(1, currentCoords.time - prev.time)
+    const dist = Math.hypot(current.x - prev.x, current.y - prev.y)
+    const timeDiff = Math.max(1, current.time - prev.time)
     const speed = dist / timeDiff // px per ms
 
-    // Pressure calculation: fast velocity = thinner hairline; slow deliberate stroke = thick rich stroke
+    // Physics: Fine Pen vs. Calligraphy Brush
     let dynamicWidth = brushSize
     if (tool === 'brush') {
-      // Flexible brush curve
-      const factor = Math.max(0.4, Math.min(2.2, 1.8 - speed * 0.45))
-      dynamicWidth = brushSize * factor
-    } else if (tool === 'chisel') {
-      // 45 degree angle nib simulation
-      const angle = Math.atan2(currentCoords.y - prev.y, currentCoords.x - prev.x)
-      const angleDiff = Math.abs(Math.sin(angle - Math.PI / 4))
-      dynamicWidth = Math.max(2, brushSize * (0.3 + angleDiff * 1.4))
+      // Calligraphy brush: slow = thick, fast = thin; pressure-sensitive
+      const speedFactor    = Math.max(0.35, Math.min(2.4, 2.0 - speed * 0.5))
+      const pressureFactor = 0.5 + current.pressure * 1.0
+      dynamicWidth = Math.max(1, brushSize * speedFactor * pressureFactor)
+    } else if (tool === 'pen') {
+      // Fine Pen: crisp hairline with subtle organic taper
+      const speedFactor = Math.max(0.65, Math.min(1.35, 1.25 - speed * 0.25))
+      dynamicWidth = Math.max(0.5, brushSize * speedFactor)
     }
 
     ctx.save()
@@ -242,29 +460,27 @@ export default function Practice() {
 
     if (tool === 'eraser') {
       ctx.globalCompositeOperation = 'destination-out'
-      ctx.lineWidth = brushSize * 2.5
+      ctx.lineWidth = Math.max(6, brushSize * 4)
     } else {
       ctx.globalCompositeOperation = 'source-over'
       ctx.strokeStyle = inkColor
       ctx.lineWidth = dynamicWidth
-      // Subtle ink bleed shadow
       ctx.shadowColor = inkColor
-      ctx.shadowBlur = 1.2
+      ctx.shadowBlur = tool === 'brush' ? 0.6 : 0.2
     }
 
+    // Smooth quadratic curve interpolation
     ctx.beginPath()
     ctx.moveTo(prev.x, prev.y)
-    // Smooth quadratic curve midpoint
-    const midX = (prev.x + currentCoords.x) / 2
-    const midY = (prev.y + currentCoords.y) / 2
+    const midX = (prev.x + current.x) / 2
+    const midY = (prev.y + current.y) / 2
     ctx.quadraticCurveTo(prev.x, prev.y, midX, midY)
     ctx.stroke()
     ctx.restore()
 
-    lastPointRef.current = currentCoords
+    lastPointRef.current = current
   }
 
-  // Stop Drawing
   const stopDrawing = () => {
     if (isDrawingRef.current) {
       isDrawingRef.current = false
@@ -272,736 +488,1097 @@ export default function Practice() {
     }
   }
 
-  // Save Canvas Practice Attempt
-  const handleSaveCanvasAttempt = async (goToAssessment = false) => {
+  // ── Character Selection Handler ──
+  const handleSelectCharacter = (char) => {
+    setSelectedCharacter(char)
+    setSearchParams({ ref: char })
+    // If a drill exists with this target, sync drill info
+    const matchedDrill = DRILL_CATALOG.find(d => d.target.toLowerCase() === char.toLowerCase())
+    if (matchedDrill) {
+      setSelectedDrill(matchedDrill)
+    } else {
+      setSelectedDrill({
+        id: `drill-${char}`,
+        target: char,
+        title: char.length > 1 ? char : `Letter '${char}'`,
+        category: char.length > 3 ? 'Words & Rhythm' : 'Letter Formation',
+        difficulty: 'Practitioner',
+        duration: '10 mins',
+        durationSec: 600,
+        objective: `Perfect the execution of ${char} adhering to standard 55° calligraphy guidelines.`,
+        tips: 'Keep downstroke pressure uniform and observe consistent inter-character optical volume.'
+      })
+    }
+  }
+
+  // ── Scroll Character Row ──
+  const scrollChars = (direction) => {
+    if (!charScrollRef.current) return
+    const scrollAmount = direction === 'left' ? -260 : 260
+    charScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' })
+  }
+
+  // ── Submit Practice Attempt & Launch AI Assessment ──
+  const handleSubmitPractice = async () => {
     const canvas = canvasRef.current
     if (!canvas) return
-    setSavingAttempt(true)
+
+    // Require actual strokes drawn
+    if (strokeCount === 0) {
+      toast.error('Please write or practice your strokes on the canvas before submitting!')
+      return
+    }
+
+    setSubmitting(true)
+    setSubmissionStep('capturing')
 
     try {
-      // Export canvas with paper background
+      // 1. Create clean offscreen composite with ivory parchment background
       const offscreen = document.createElement('canvas')
       offscreen.width = canvas.width
       offscreen.height = canvas.height
       const offCtx = offscreen.getContext('2d')
-
-      // Draw paper background
-      offCtx.fillStyle = textures[paperTexture] || '#F2ECE0'
+      offCtx.fillStyle = '#FAF6F0'
       offCtx.fillRect(0, 0, offscreen.width, offscreen.height)
-      // Draw user's ink
       offCtx.drawImage(canvas, 0, 0)
-
       const base64Data = offscreen.toDataURL('image/png')
 
-      const res = await axios.post('/api/practice/attempt', {
-        targetReference,
+      setSubmissionStep('analyzing')
+      await new Promise(r => setTimeout(r, 600)) // smooth visual feedback
+
+      setSubmissionStep('scoring')
+
+      // 2. Call backend /api/practice/attempt
+      const payload = {
+        targetReference: selectedCharacter,
+        title: `${selectedDrill.title} — Studio Practice`,
         attemptType: 'digital_canvas',
         base64Data,
-        durationSeconds: 90
-      })
-
-      if (res.data.user) updateUser(res.data.user)
-      toast.success(`Practice Attempt #${res.data.attemptNumber} Saved! +10 XP`)
-      fetchAttempts(targetReference)
-
-      if (goToAssessment) {
-        navigate('/progress', { state: { attemptImage: res.data.attempt?.imageUrl || base64Data, targetReference } })
+        durationSeconds: elapsedSeconds,
+        tool,
+        brushSize,
+        inkColor,
+        notes: `Practiced "${selectedCharacter}" with ${tool === 'pen' ? 'Fine Pen' : tool === 'brush' ? 'Calligraphy Brush' : 'Eraser'} · guide: ${guidePreset} · ${formatTime(elapsedSeconds)}.`
       }
-    } catch (err) {
-      toast.error('Failed to save practice attempt')
-    } finally {
-      setSavingAttempt(false)
-    }
-  }
 
-  // Upload handwritten paper work
-  const handleUploadHandwritten = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+      const res = await axios.post('/api/practice/attempt', payload)
 
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error('File size exceeds 10MB limit')
-      return
-    }
-
-    setUploadFile(file)
-    setUploadPreview(URL.createObjectURL(file))
-  }
-
-  const handleSaveUploadedWork = async (goToAssessment = false) => {
-    if (!uploadFile) return toast.error('Please choose a calligraphy image first')
-    setUploading(true)
-
-    try {
-      const formData = new FormData()
-      formData.append('image', uploadFile)
-
-      const uploadRes = await axios.post('/api/practice/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
-
-      const imageUrl = uploadRes.data.url
-
-      const res = await axios.post('/api/practice/attempt', {
-        targetReference,
-        attemptType: 'handwritten_upload',
-        imageUrl,
-        durationSeconds: 120
-      })
-
-      if (res.data.user) updateUser(res.data.user)
-      toast.success('Handwritten work uploaded & saved! +10 XP')
-      fetchAttempts(targetReference)
-
-      if (goToAssessment) {
-        navigate('/progress', { state: { attemptImage: imageUrl, targetReference } })
+      if (res.data.user) {
+        updateUser(res.data.user)
       }
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Upload failed')
+
+      // Pause timer after successful submission
+      setTimerRunning(false)
+      toast.success(`Practice saved! +${res.data.xpEarned || 25} XP`)
+
+      // Open instant assessment modal
+      setAssessmentModalData({
+        attempt: res.data.attempt,
+        assessment: res.data.assessment,
+        streak: res.data.streak || user?.streak || 13,
+        xpEarned: res.data.xpEarned || 25,
+        imageUrl: res.data.attempt?.imageUrl || base64Data
+      })
+
+    } catch (error) {
+      console.error('Submission failed:', error)
+      toast.error(error.response?.data?.message || 'Failed to submit practice attempt. Please try again.')
     } finally {
-      setUploading(false)
+      setSubmitting(false)
+      setSubmissionStep('')
     }
   }
+
+  // Active characters list for current category
+  const activeCharList = CHARACTER_CATEGORIES.find(c => c.id === activeCategory)?.items || []
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-6xl mx-auto">
+    <div className="w-full flex flex-col gap-4 text-[#171513] select-none animate-fade-in relative">
       
-      {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-amber-900/10 pb-4">
+      {/* ═══════════════════════════════════════════════════════════════
+          HEADER: TITLE, SUBTITLE & CALLIGRAPHY MOTTO
+          ═══════════════════════════════════════════════════════════════ */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 pb-1 relative">
         <div>
-          <h1 className="text-3xl font-semibold font-display tracking-tight text-neutral-100 flex items-center gap-2">
-            Calligraphy Practice Lab <BookOpen className="w-6 h-6 text-amber-500" />
+          <h1 className="text-3xl sm:text-4xl lg:text-[42px] font-serif font-normal text-[#171513] tracking-tight leading-none">
+            Practice Lab
           </h1>
-          <p className="text-xs text-neutral-400">
-            Interactive digital drawing lab & handwritten work upload. Trace over precision guidelines, compare attempts, and submit for AI analysis.
+          <p className="text-xs sm:text-sm text-[#6B5140] font-sans mt-1.5 font-normal">
+            Refine your strokes with guided practice and real-time feedback.
           </p>
         </div>
 
-        {/* Practice Mode Tabs */}
-        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-neutral-900 border border-amber-900/20">
-          <button
-            onClick={() => setActiveTab('canvas')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              activeTab === 'canvas' 
-                ? 'bg-amber-500 text-neutral-950 shadow-gold' 
-                : 'text-neutral-400 hover:text-neutral-200'
-            }`}
-          >
-            <Paintbrush className="w-3.5 h-3.5" /> Digital Canvas
-          </button>
-
-          <button
-            onClick={() => setActiveTab('upload')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              activeTab === 'upload' 
-                ? 'bg-amber-500 text-neutral-950 shadow-gold' 
-                : 'text-neutral-400 hover:text-neutral-200'
-            }`}
-          >
-            <UploadCloud className="w-3.5 h-3.5" /> Upload Handwritten
-          </button>
-
-          <button
-            onClick={() => setActiveTab('compare')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              activeTab === 'compare' 
-                ? 'bg-amber-500 text-neutral-950 shadow-gold' 
-                : 'text-neutral-400 hover:text-neutral-200'
-            }`}
-          >
-            <SplitSquareVertical className="w-3.5 h-3.5" /> Compare Mode
-          </button>
+        {/* Artistic Motto Quote */}
+        <div className="hidden md:flex flex-col items-end">
+          <p className="font-serif italic text-base lg:text-[18px] text-[#302B27] tracking-wide">
+            “Small strokes create big progress.”
+          </p>
+          <div className="w-28 h-[1.5px] bg-[#A85D55] mt-1 opacity-70" />
         </div>
       </div>
 
-      {/* Target Reference Selector & Character Palette */}
-      <div className="p-4 rounded-2xl bg-neutral-900 border border-amber-900/20 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <span className="text-[10px] uppercase font-mono tracking-widest text-amber-500 font-semibold flex items-center gap-1">
-            <Zap className="w-3 h-3 text-amber-500" /> Target Practice Reference Letter / Word:
-          </span>
-
-          {/* Custom Reference Input */}
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              placeholder="Type custom letter/word..."
-              value={customInput}
-              onChange={(e) => setCustomInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && customInput.trim()) {
-                  setTargetReference(customInput.trim())
-                  setCustomInput('')
-                  toast.success(`Active drill set to: "${customInput.trim()}"`)
-                }
-              }}
-              className="input py-1 px-3 text-xs w-48"
-            />
-            <button
-              onClick={() => {
-                if (customInput.trim()) {
-                  setTargetReference(customInput.trim())
-                  setCustomInput('')
-                  toast.success(`Active drill set to: "${customInput.trim()}"`)
-                }
-              }}
-              className="btn btn-ghost btn-sm text-xs py-1"
-            >
-              Set
-            </button>
-          </div>
-        </div>
-
-        {/* Quick character buttons */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-          {quickLetters.map((item) => (
-            <button
-              key={item.val}
-              onClick={() => {
-                setTargetReference(item.val)
-                toast.success(`Practicing: ${item.label}`)
-              }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-serif font-bold border transition-all shrink-0 ${
-                targetReference === item.val
-                  ? 'border-amber-500 bg-amber-500/15 text-amber-300 shadow-gold'
-                  : 'border-neutral-800 text-neutral-400 hover:text-neutral-200 bg-neutral-950/40'
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ─────────────────────────────────────────────────────────────
-          TAB 1: DIGITAL PRACTICE CANVAS
-      ───────────────────────────────────────────────────────────── */}
-      {activeTab === 'canvas' && (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      {/* ═══════════════════════════════════════════════════════════════
+          DRILL CONTROL BAR (Dropdown, Badges, Timer, Actions)
+          ═══════════════════════════════════════════════════════════════ */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-[#FAF6F0] p-2 sm:px-3 sm:py-2.5 rounded-2xl border border-[rgba(107,81,64,0.18)] shadow-xs">
+        
+        {/* Left: Drill Selector & Pills */}
+        <div className="flex flex-wrap items-center gap-2">
           
-          {/* Main Drawing Canvas Board (Left 3 Columns) */}
-          <div className="lg:col-span-3 space-y-4">
-            
-            {/* Canvas Toolbar Top */}
-            <div className="p-3 rounded-2xl bg-neutral-900 border border-amber-900/15 flex flex-wrap items-center justify-between gap-3 text-xs">
-              
-              {/* Nib / Tool Selection */}
-              <div className="flex items-center gap-1">
-                {[
-                  { id: 'pen', label: 'Fine Pen' },
-                  { id: 'brush', label: 'Brush Nib' },
-                  { id: 'chisel', label: 'Chisel 45°' },
-                  { id: 'eraser', label: 'Eraser' },
-                ].map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => setTool(t.id)}
-                    className={`px-2.5 py-1.5 rounded-lg font-medium transition-all ${
-                      tool === t.id
-                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                        : 'text-neutral-400 hover:text-neutral-200'
-                    }`}
-                  >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Ink Colors */}
-              <div className="flex items-center gap-1.5">
-                {inkPalettes.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => setInkColor(p.color)}
-                    style={{ backgroundColor: p.color }}
-                    className={`w-6 h-6 rounded-full border transition-all ${
-                      inkColor === p.color ? 'ring-2 ring-amber-400 scale-110 border-white' : 'border-neutral-700'
-                    }`}
-                    title={p.name}
-                  />
-                ))}
-              </div>
-
-              {/* Brush Size Slider */}
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-neutral-400 font-mono">Size: {brushSize}px</span>
-                <input
-                  type="range"
-                  min="2"
-                  max="28"
-                  value={brushSize}
-                  onChange={(e) => setBrushSize(Number(e.target.value))}
-                  className="w-20 accent-amber-500"
-                />
-              </div>
-
-              {/* Canvas Undo/Redo & Clear */}
-              <div className="flex items-center gap-1">
-                <button 
-                  onClick={handleUndo} 
-                  className="p-1.5 rounded-lg hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200" 
-                  title="Undo"
-                >
-                  <Undo className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={handleRedo} 
-                  className="p-1.5 rounded-lg hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200" 
-                  title="Redo"
-                >
-                  <Redo className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={handleClear} 
-                  className="p-1.5 rounded-lg hover:bg-red-500/10 text-neutral-400 hover:text-red-400" 
-                  title="Clear Canvas"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-
-            </div>
-
-            {/* Interactive Drawing Viewport Container */}
-            <div 
-              className="relative aspect-[16/10] w-full rounded-2xl border-2 border-amber-900/30 overflow-hidden shadow-2xl select-none"
-              style={{ backgroundColor: textures[paperTexture] }}
+          {/* Drill Dropdown Pill */}
+          <div className="relative">
+            <button
+              onClick={() => setDrillDropdownOpen(!drillDropdownOpen)}
+              className="flex items-center gap-2 bg-white px-3.5 py-1.5 rounded-xl border border-[rgba(107,81,64,0.2)] hover:border-[#171513] transition-colors shadow-2xs group"
             >
-              
-              {/* 55° Slant Guidelines Overlay */}
-              {showSlantGuides && (
-                <div 
-                  className="absolute inset-0 pointer-events-none opacity-20"
-                  style={{
-                    backgroundImage: 'repeating-linear-gradient(55deg, transparent, transparent 35px, #8B5A2B 36px, #8B5A2B 37px)',
-                    backgroundSize: '100% 100%'
-                  }}
-                />
-              )}
+              <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-[#8E7360]">
+                DRILL
+              </span>
+              <span className="font-serif font-semibold text-xs sm:text-sm text-[#171513]">
+                {selectedDrill.title}
+              </span>
+              <ChevronDown className="w-3.5 h-3.5 text-[#8E7360] group-hover:text-[#171513] transition-transform duration-200" />
+            </button>
 
-              {/* Grid Overlay */}
-              {showGrid && (
-                <div 
-                  className="absolute inset-0 pointer-events-none opacity-15"
-                  style={{
-                    backgroundImage: 'radial-gradient(circle, #000 1px, transparent 1px)',
-                    backgroundSize: '18px 18px'
-                  }}
-                />
-              )}
-
-              {/* Horizontal Calligraphy Guidelines (Ascender, x-Height, Baseline, Descender) */}
-              {showGuidelines && (
-                <div className="absolute inset-0 pointer-events-none flex flex-col justify-center gap-10 px-8 opacity-40">
-                  {/* Ascender line (dashed) */}
-                  <div className="w-full border-b border-dashed border-amber-900/40 relative">
-                    <span className="absolute -top-3 left-0 text-[8px] font-mono text-neutral-600">Ascender line</span>
+            {/* Dropdown Menu */}
+            {drillDropdownOpen && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setDrillDropdownOpen(false)} />
+                <div className="absolute left-0 top-full mt-1.5 w-64 bg-white rounded-xl border border-[rgba(107,81,64,0.22)] shadow-xl z-40 py-1 overflow-hidden animate-fade-in">
+                  <div className="px-3 py-1.5 border-b border-[rgba(107,81,64,0.1)] text-[9px] uppercase tracking-wider font-mono text-[#8E7360]">
+                    Select Studio Drill
                   </div>
-                  {/* x-Height line (dotted) */}
-                  <div className="w-full border-b border-dotted border-blue-900/50 relative">
-                    <span className="absolute -top-3 left-0 text-[8px] font-mono text-blue-900">x-Height (waistline)</span>
-                  </div>
-                  {/* Baseline (solid) */}
-                  <div className="w-full border-b-2 border-amber-950/60 relative">
-                    <span className="absolute -top-3.5 left-0 text-[8px] font-mono text-amber-900 font-bold">Baseline</span>
-                  </div>
-                  {/* Descender line (dashed) */}
-                  <div className="w-full border-b border-dashed border-amber-900/40 relative">
-                    <span className="absolute -top-3 left-0 text-[8px] font-mono text-neutral-600">Descender line</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Reference Character Trace Underlay Watermark */}
-              {showTraceUnderlay && (
-                <div 
-                  className="absolute inset-0 pointer-events-none flex items-center justify-center text-center transition-opacity"
-                  style={{ opacity: traceOpacity }}
-                >
-                  <span className="text-[12rem] font-serif text-neutral-800 select-none tracking-wider font-light italic">
-                    {targetReference}
-                  </span>
-                </div>
-              )}
-
-              {/* Native HTML5 Canvas for Zero-Lag Drawing */}
-              <canvas
-                ref={canvasRef}
-                onMouseDown={startDrawing}
-                onMouseMove={draw}
-                onMouseUp={stopDrawing}
-                onMouseLeave={stopDrawing}
-                onTouchStart={startDrawing}
-                onTouchMove={draw}
-                onTouchEnd={stopDrawing}
-                className="w-full h-full cursor-crosshair relative z-10 touch-none"
-              />
-
-              {/* Bottom Guideline Legend Indicator */}
-              <div className="absolute bottom-2.5 right-3 z-20 text-[9px] font-mono text-neutral-600 bg-neutral-900/70 px-2 py-1 rounded border border-neutral-800 pointer-events-none">
-                Slant: 55° • Pressure simulation active
-              </div>
-            </div>
-
-            {/* Bottom Actions Bar */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-              <div className="flex items-center gap-2 text-xs text-neutral-400">
-                <MousePointer className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
-                <span>Draw directly with mouse, stylus pen, or tablet touch</span>
-              </div>
-
-              <div className="flex items-center gap-2.5 w-full sm:w-auto">
-                <button
-                  onClick={() => handleSaveCanvasAttempt(false)}
-                  disabled={savingAttempt}
-                  className="btn btn-ghost btn-sm text-xs flex items-center justify-center gap-1.5 flex-1 sm:flex-none border hover:border-amber-500"
-                >
-                  <Save className="w-4 h-4" /> {savingAttempt ? 'Saving...' : 'Save Attempt (+10 XP)'}
-                </button>
-
-                <button
-                  onClick={() => handleSaveCanvasAttempt(true)}
-                  disabled={savingAttempt}
-                  className="btn btn-primary btn-sm text-xs flex items-center justify-center gap-1.5 flex-1 sm:flex-none shadow-gold"
-                >
-                  <Sparkles className="w-4 h-4" /> Save & AI Evaluate →
-                </button>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Right Sidebar: Guidelines Controls & Attempt History */}
-          <div className="space-y-4">
-            
-            {/* Guidelines Control Card */}
-            <div className="p-5 rounded-2xl bg-neutral-900 border border-amber-900/15 space-y-4">
-              <h3 className="text-xs uppercase font-mono tracking-wider text-amber-500 font-semibold flex items-center gap-1.5">
-                <Sliders className="w-3.5 h-3.5" /> Guideline Overlays
-              </h3>
-
-              <div className="space-y-2.5 text-xs text-neutral-300">
-                <label className="flex items-center justify-between cursor-pointer">
-                  <span>55° Slant Lines</span>
-                  <input
-                    type="checkbox"
-                    checked={showSlantGuides}
-                    onChange={(e) => setShowSlantGuides(e.target.checked)}
-                    className="accent-amber-500"
-                  />
-                </label>
-
-                <label className="flex items-center justify-between cursor-pointer">
-                  <span>Baseline & x-Height</span>
-                  <input
-                    type="checkbox"
-                    checked={showGuidelines}
-                    onChange={(e) => setShowGuidelines(e.target.checked)}
-                    className="accent-amber-500"
-                  />
-                </label>
-
-                <label className="flex items-center justify-between cursor-pointer">
-                  <span>Millimeter Dot Grid</span>
-                  <input
-                    type="checkbox"
-                    checked={showGrid}
-                    onChange={(e) => setShowGrid(e.target.checked)}
-                    className="accent-amber-500"
-                  />
-                </label>
-
-                <label className="flex items-center justify-between cursor-pointer">
-                  <span>Trace Underlay Model</span>
-                  <input
-                    type="checkbox"
-                    checked={showTraceUnderlay}
-                    onChange={(e) => setShowTraceUnderlay(e.target.checked)}
-                    className="accent-amber-500"
-                  />
-                </label>
-
-                {showTraceUnderlay && (
-                  <div className="pt-2 border-t border-neutral-800 space-y-1">
-                    <div className="flex justify-between text-[10px] text-neutral-400 font-mono">
-                      <span>Trace Opacity</span>
-                      <span>{Math.round(traceOpacity * 100)}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0.05"
-                      max="0.6"
-                      step="0.05"
-                      value={traceOpacity}
-                      onChange={(e) => setTraceOpacity(Number(e.target.value))}
-                      className="w-full accent-amber-500"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Paper Texture Card */}
-            <div className="p-5 rounded-2xl bg-neutral-900 border border-amber-900/15 space-y-3">
-              <h3 className="text-xs uppercase font-mono tracking-wider text-neutral-300 font-semibold">
-                Paper Surface Texture
-              </h3>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { id: 'parchment', name: 'Vintage' },
-                  { id: 'linen', name: 'Fine Linen' },
-                  { id: 'rice', name: 'Rice Paper' },
-                  { id: 'slate', name: 'Dark Slate' },
-                ].map((tex) => (
-                  <button
-                    key={tex.id}
-                    onClick={() => setPaperTexture(tex.id)}
-                    className={`p-2 rounded-xl text-xs border transition-all ${
-                      paperTexture === tex.id
-                        ? 'border-amber-500 bg-amber-500/10 text-amber-300'
-                        : 'border-neutral-800 text-neutral-400 hover:text-neutral-200'
-                    }`}
-                  >
-                    {tex.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Previous Attempts Carousel / List */}
-            <div className="p-5 rounded-2xl bg-neutral-900 border border-amber-900/15 space-y-3">
-              <div className="flex items-center justify-between border-b border-amber-900/10 pb-2">
-                <h3 className="text-xs uppercase font-mono tracking-wider text-amber-500 font-semibold flex items-center gap-1.5">
-                  <History className="w-3.5 h-3.5" /> Previous Attempts ({previousAttempts.length})
-                </h3>
-              </div>
-
-              {previousAttempts.length === 0 ? (
-                <p className="text-xs text-neutral-500 py-3 text-center">
-                  No saved attempts yet for "{targetReference}". Draw and save above!
-                </p>
-              ) : (
-                <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                  {previousAttempts.map((att) => (
-                    <div
-                      key={att._id}
+                  {DRILL_CATALOG.map((drill) => (
+                    <button
+                      key={drill.id}
                       onClick={() => {
-                        setSelectedAttemptForCompare(att)
-                        setActiveTab('compare')
+                        setSelectedDrill(drill)
+                        setSelectedCharacter(drill.target)
+                        setSearchParams({ ref: drill.target })
+                        setDrillDropdownOpen(false)
                       }}
-                      className="p-2.5 rounded-xl bg-neutral-950 border border-neutral-800 hover:border-amber-500/30 cursor-pointer flex items-center justify-between transition-all group"
+                      className={`w-full px-3 py-2 text-left text-xs font-sans flex items-center justify-between transition-colors ${
+                        selectedDrill.id === drill.id ? 'bg-[#FAF6F0] text-[#642F35] font-bold' : 'text-[#302B27] hover:bg-[#FAF6F0]'
+                      }`}
                     >
-                      <div className="flex items-center gap-2.5">
-                        <img 
-                          src={att.imageUrl} 
-                          alt={att.title} 
-                          className="w-10 h-10 rounded-lg object-cover border border-amber-500/20"
-                        />
-                        <div>
-                          <p className="text-xs font-semibold text-neutral-200 group-hover:text-amber-300">
-                            Attempt #{att.attemptNumber}
-                          </p>
-                          <p className="text-[10px] text-neutral-500 font-mono capitalize">
-                            {att.attemptType?.replace('_', ' ')}
-                          </p>
-                        </div>
-                      </div>
-                      <span className="text-[10px] text-amber-500 group-hover:underline">Compare</span>
-                    </div>
+                      <span className="font-serif text-sm">{drill.title}</span>
+                      <span className="text-[10px] font-mono text-[#8E7360]">{drill.duration}</span>
+                    </button>
                   ))}
                 </div>
-              )}
-            </div>
-
+              </>
+            )}
           </div>
 
+          {/* Level Pill */}
+          <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-xl border border-[rgba(107,81,64,0.18)] text-[11px] font-medium text-[#302B27]">
+            <Leaf className="w-3.5 h-3.5 text-[#A85D55]" />
+            <span>{selectedDrill.difficulty}</span>
+          </div>
+
+          {/* Drill Info toggle */}
+          <button
+            onClick={() => setDrillInfoOpen(!drillInfoOpen)}
+            title="Drill objective & tips"
+            className="hidden lg:flex items-center justify-center w-7 h-7 rounded-full bg-white border border-[rgba(107,81,64,0.18)] text-[#8E7360] hover:text-[#171513] hover:bg-[#FAF6F0] transition-colors"
+          >
+            <Info className="w-3.5 h-3.5" />
+          </button>
+
+          {/* Focus Pill */}
+          <div className="hidden sm:flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-xl border border-[rgba(107,81,64,0.18)] text-[11px] font-medium text-[#302B27]">
+            <Target className="w-3.5 h-3.5 text-[#A85D55]" />
+            <span>{selectedDrill.category}</span>
+          </div>
+
+          {/* Duration Pill */}
+          <div className="hidden md:flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-xl border border-[rgba(107,81,64,0.18)] text-[11px] font-medium text-[#302B27]">
+            <Clock className="w-3.5 h-3.5 text-[#A85D55]" />
+            <span>{selectedDrill.duration}</span>
+          </div>
+
+        </div>
+
+        {/* Right: Actions, Timer & SUBMIT */}
+        <div className="flex items-center gap-2">
+          
+          {/* Undo Button */}
+          <button
+            onClick={handleUndo}
+            disabled={!canUndo}
+            className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${
+              canUndo 
+                ? 'bg-white border-[rgba(107,81,64,0.22)] text-[#171513] hover:bg-[#FAF6F0] hover:scale-105 active:scale-95 shadow-2xs' 
+                : 'bg-white/50 border-[rgba(107,81,64,0.1)] text-[#C4B5A5] cursor-not-allowed'
+            }`}
+            title="Undo stroke (Ctrl+Z)"
+          >
+            <Undo2 className="w-3.5 h-3.5" />
+          </button>
+
+          {/* Redo Button */}
+          <button
+            onClick={handleRedo}
+            disabled={!canRedo}
+            className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${
+              canRedo 
+                ? 'bg-white border-[rgba(107,81,64,0.22)] text-[#171513] hover:bg-[#FAF6F0] hover:scale-105 active:scale-95 shadow-2xs' 
+                : 'bg-white/50 border-[rgba(107,81,64,0.1)] text-[#C4B5A5] cursor-not-allowed'
+            }`}
+            title="Redo stroke"
+          >
+            <Redo2 className="w-3.5 h-3.5" />
+          </button>
+
+          {/* Clear Button */}
+          <button
+            onClick={() => setClearDialogOpen(true)}
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-white border border-[rgba(107,81,64,0.22)] text-[#A85D55] hover:bg-[#F4E8E6] transition-all shadow-2xs active:scale-95"
+            title="Clear practice sheet"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+
+          {/* Timer Display — click to pause/resume */}
+          <button
+            id="btn-timer"
+            onClick={() => setTimerRunning(!timerRunning)}
+            className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full border border-[rgba(107,81,64,0.22)] shadow-2xs font-mono text-xs font-bold text-[#171513] hover:border-[#171513] transition-colors"
+            title={timerRunning ? 'Click to Pause Timer' : 'Click to Resume Timer'}
+            aria-label={timerRunning ? 'Pause timer' : 'Resume timer'}
+          >
+            {timerRunning
+              ? <Pause className="w-3.5 h-3.5 text-[#A85D55]" />
+              : <Play  className="w-3.5 h-3.5 text-[#8E7360]" />
+            }
+            <span>{formatTime(elapsedSeconds)}</span>
+          </button>
+
+          {/* SUBMIT BUTTON */}
+          <button
+            onClick={handleSubmitPractice}
+            disabled={submitting}
+            className="flex items-center gap-2 px-5 py-2 rounded-full bg-[#642F35] text-[#FAF6F0] hover:bg-[#50242A] border border-[#50242A] text-xs font-sans font-bold tracking-wider uppercase transition-all shadow-md hover:shadow-lg active:scale-95 disabled:opacity-75 disabled:cursor-wait"
+          >
+            <span>{submitting ? 'Analyzing...' : 'SUBMIT'}</span>
+            <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
+          </button>
+
+        </div>
+
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          MAIN WORKSPACE DESK: STUDIO TOOLS + LARGE CANVAS
+          ═══════════════════════════════════════════════════════════════ */}
+      {/* Drill info callout — toggled by ℹ button */}
+      {drillInfoOpen && (
+        <div className="flex items-start gap-3 bg-[#FAF6F0] border border-[rgba(107,81,64,0.18)] rounded-xl px-4 py-3 text-xs shadow-sm" style={{ animation: 'fadeIn 0.2s ease' }}>
+          <Sparkles className="w-4 h-4 text-[#A85D55] shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-[#171513] mb-0.5">{selectedDrill.objective}</p>
+            <p className="text-[#6B5140]"><span className="font-bold text-[#302B27]">Tip: </span>{selectedDrill.tips}</p>
+          </div>
+          <button onClick={() => setDrillInfoOpen(false)} className="text-[#8E7360] hover:text-[#171513] transition-colors shrink-0">
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 
-      {/* ─────────────────────────────────────────────────────────────
-          TAB 2: UPLOAD HANDWRITTEN WORK
-      ───────────────────────────────────────────────────────────── */}
-      {activeTab === 'upload' && (
-        <div className="p-8 rounded-3xl bg-neutral-900 border border-amber-900/20 space-y-6 max-w-3xl mx-auto shadow-2xl">
-          <div className="space-y-2 text-center">
-            <h2 className="text-2xl font-bold font-display text-neutral-100">
-              Upload Your Physical Handwritten Calligraphy
-            </h2>
-            <p className="text-xs text-neutral-400 max-w-md mx-auto">
-              Snapped a picture of your physical ink on paper? Upload it here to log practice, compare with the reference, and run AI stroke analysis.
+      <div className="flex flex-col lg:flex-row gap-4 items-stretch" style={{ minHeight: 'calc(100vh - 330px)', maxHeight: 'calc(100vh - 230px)' }}>
+        
+        {/* ── LEFT: STUDIO TOOLS PANEL ────────────────────────────── */}
+        <div className="w-full lg:w-[236px] shrink-0 bg-[#FAF6F0] rounded-2xl border border-[rgba(107,81,64,0.2)] p-4 shadow-sm flex flex-col gap-3 relative overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
+          
+          <div className="space-y-3.5">
+            
+            {/* Studio Tools Header */}
+            <div className="flex items-center gap-2 pb-1 border-b border-[rgba(107,81,64,0.12)]">
+              <Sliders className="w-4 h-4 text-[#A85D55]" />
+              <h2 className="text-xs uppercase font-sans font-bold tracking-[0.14em] text-[#171513]">
+                Studio Tools
+              </h2>
+            </div>
+
+            {/* Pen / Brush Selection */}
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTool('pen')}
+                  className={`py-2 px-2.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all ${
+                    tool === 'pen'
+                      ? 'bg-[#642F35] border-[#50242A] text-[#FAF6F0] shadow-sm'
+                      : 'bg-white border-[rgba(107,81,64,0.18)] text-[#4A433D] hover:bg-white/80'
+                  }`}
+                >
+                  <PenTool className="w-4 h-4" />
+                  <span className="text-[11px] font-sans font-semibold">Fine Pen</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setTool('brush')}
+                  className={`py-2 px-2.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all ${
+                    tool === 'brush'
+                      ? 'bg-[#642F35] border-[#50242A] text-[#FAF6F0] shadow-sm'
+                      : 'bg-white border-[rgba(107,81,64,0.18)] text-[#4A433D] hover:bg-white/80'
+                  }`}
+                >
+                  <Paintbrush className="w-4 h-4" />
+                  <span className="text-[11px] font-sans font-semibold">Brush</span>
+                </button>
+              </div>
+
+              {/* Eraser Tool */}
+              <button
+                type="button"
+                onClick={() => setTool('eraser')}
+                className={`w-full py-2 px-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${
+                  tool === 'eraser'
+                    ? 'bg-[#642F35] border-[#50242A] text-[#FAF6F0] shadow-sm'
+                    : 'bg-white border-[rgba(107,81,64,0.18)] text-[#4A433D] hover:bg-white/80'
+                }`}
+              >
+                <Eraser className="w-4 h-4" />
+                <span className="text-[11px] font-sans font-semibold">Eraser</span>
+              </button>
+            </div>
+
+            {/* Artisan Ink Color Selection */}
+            <div className="space-y-1.5">
+              <label className="text-[9px] uppercase font-mono font-bold tracking-wider text-[#6B5140] block">
+                Artisan Ink
+              </label>
+              <div className="flex items-center justify-between gap-1.5 pt-0.5">
+                {INK_PALETTE.map((ink) => {
+                  const isSelected = inkColor === ink.color && tool !== 'eraser'
+                  return (
+                    <button
+                      key={ink.color}
+                      type="button"
+                      onClick={() => {
+                        setInkColor(ink.color)
+                        if (tool === 'eraser') setTool('pen')
+                      }}
+                      className={`relative w-8 h-8 rounded-full transition-transform duration-200 flex items-center justify-center ${
+                        isSelected ? 'scale-110' : 'hover:scale-105'
+                      }`}
+                      title={ink.name}
+                    >
+                      {/* Outer Ring when selected */}
+                      {isSelected && (
+                        <span className="absolute inset-[-3px] rounded-full border-2 border-[#171513] pointer-events-none" />
+                      )}
+                      <span 
+                        className="w-full h-full rounded-full border border-black/10 shadow-xs block"
+                        style={{ backgroundColor: ink.color }}
+                      />
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Size Slider */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-[9px] uppercase font-mono font-bold tracking-wider">
+                <span className="text-[#6B5140]">Size</span>
+                <span className="text-[#A85D55]">{brushSize}px</span>
+              </div>
+              <input
+                id="brush-size-slider"
+                type="range"
+                min="1"
+                max="24"
+                step="1"
+                value={brushSize}
+                onChange={(e) => setBrushSize(Number(e.target.value))}
+                aria-label="Brush size"
+                aria-valuenow={brushSize}
+                className="w-full h-1.5 rounded-lg appearance-none cursor-pointer"
+                style={{
+                  background: `linear-gradient(to right, #642F35 ${((brushSize-1)/23)*100}%, #EFE5D5 ${((brushSize-1)/23)*100}%)`,
+                  accentColor: '#642F35',
+                }}
+              />
+              {/* Live size preview dot */}
+              <div className="flex justify-center pt-0.5">
+                <span
+                  className="rounded-full block"
+                  style={{
+                    width:  Math.max(4, brushSize),
+                    height: Math.max(4, brushSize),
+                    backgroundColor: tool === 'eraser' ? '#C4B5A5' : inkColor,
+                    transition: 'all 0.1s ease',
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Guides & Grid Controls */}
+            <div className="space-y-2 pt-1 border-t border-[rgba(107,81,64,0.1)]">
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] uppercase font-mono font-bold tracking-wider text-[#6B5140]">
+                  Guides & Grid
+                </span>
+                
+                {/* 55° Switch Toggle */}
+                <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                  <span className="text-[10px] font-sans font-medium text-[#171513]">55° Guides</span>
+                  <div className="relative inline-flex items-center">
+                    <input
+                      type="checkbox"
+                      id="slant-guide-toggle"
+                      checked={slantGuideActive}
+                      onChange={(e) => setSlantGuideActive(e.target.checked)}
+                      aria-label="Toggle 55° slant guides"
+                      className="sr-only peer"
+                    />
+                    <div
+                      className="w-8 rounded-full relative transition-colors duration-200"
+                      style={{ height: 18, backgroundColor: slantGuideActive ? '#642F35' : '#DDD0BC' }}
+                    >
+                      <span
+                        className="absolute top-[2px] bg-white rounded-full shadow-sm transition-transform duration-200"
+                        style={{ width: 14, height: 14, left: 2, transform: slantGuideActive ? 'translateX(14px)' : 'translateX(0)' }}
+                      />
+                    </div>
+                  </div>
+                </label>
+              </div>
+
+              {/* 5 Guide Preset Cards */}
+              <div className="grid grid-cols-5 gap-1 pt-1">
+                {[
+                  { id: 'none', label: 'None', visual: 'clean' },
+                  { id: 'lines', label: 'Lines', visual: 'horiz' },
+                  { id: 'grid', label: 'Grid', visual: 'grid' },
+                  { id: 'slant', label: 'Slant', visual: 'slant' },
+                  { id: 'full', label: 'Full', visual: 'full' },
+                ].map((preset) => {
+                  const isActive = guidePreset === preset.id
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => {
+                        setGuidePreset(preset.id)
+                        if (preset.id === 'none') setSlantGuideActive(false)
+                        else if (preset.id === 'slant' || preset.id === 'full') setSlantGuideActive(true)
+                      }}
+                      className={`flex flex-col items-center justify-center p-1 rounded-lg border transition-all ${
+                        isActive
+                          ? 'border-[#642F35] bg-[#EFE2E4] text-[#642F35] font-bold shadow-2xs'
+                          : 'border-[rgba(107,81,64,0.18)] bg-white text-[#6B5140] hover:bg-[#FAF6F0]'
+                      }`}
+                    >
+                      {/* Mini preview thumbnail of the guide pattern */}
+                      <div className="w-full h-7 rounded bg-[#FAF6F0] mb-1 relative overflow-hidden border border-black/5 flex items-center justify-center">
+                        {preset.visual === 'clean' && <div className="w-full h-full" />}
+                        {preset.visual === 'horiz' && (
+                          <div className="w-full h-full flex flex-col justify-between py-1 px-1">
+                            <div className="w-full h-px bg-[#8E7360]/40" />
+                            <div className="w-full h-px bg-[#8E7360]/40" />
+                            <div className="w-full h-px bg-[#8E7360]/60" />
+                            <div className="w-full h-px bg-[#8E7360]/40" />
+                          </div>
+                        )}
+                        {preset.visual === 'grid' && (
+                          <div className="w-full h-full bg-[linear-gradient(to_right,#8E7360_1px,transparent_1px),linear-gradient(to_bottom,#8E7360_1px,transparent_1px)] bg-[size:4px_4px] opacity-25" />
+                        )}
+                        {preset.visual === 'slant' && (
+                          <div className="w-full h-full bg-[repeating-linear-gradient(55deg,transparent,transparent_4px,#A85D55_4px,#A85D55_5px)] opacity-35" />
+                        )}
+                        {preset.visual === 'full' && (
+                          <div className="w-full h-full bg-[linear-gradient(to_bottom,#8E7360_1px,transparent_1px),repeating-linear-gradient(55deg,transparent,transparent_5px,#A85D55_5px,#A85D55_6px)] bg-[size:100%_4px] opacity-35" />
+                        )}
+                      </div>
+                      <span className="text-[9px] font-sans truncate">{preset.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Tracing & Reference Controls */}
+            <div className="space-y-2 pt-1 border-t border-[rgba(107,81,64,0.1)]">
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] uppercase font-mono font-bold tracking-wider text-[#6B5140]">
+                  Tracing & Reference
+                </span>
+              </div>
+
+              {/* Show Reference Switch */}
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-sans text-[#302B27]">Show Reference</span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="show-reference-toggle"
+                    checked={showReference}
+                    onChange={(e) => setShowReference(e.target.checked)}
+                    aria-label="Toggle reference overlay"
+                    className="sr-only"
+                  />
+                  <div
+                    className="rounded-full relative transition-colors duration-200"
+                    style={{ width: 32, height: 18, backgroundColor: showReference ? '#642F35' : '#DDD0BC', cursor: 'pointer' }}
+                  >
+                    <span
+                      className="absolute top-[2px] bg-white rounded-full shadow-sm transition-transform duration-200"
+                      style={{ width: 14, height: 14, left: 2, transform: showReference ? 'translateX(14px)' : 'translateX(0)' }}
+                    />
+                  </div>
+                </label>
+              </div>
+
+              {/* Tracing Mode Switch */}
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-sans text-[#302B27]">Tracing Mode</span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="tracing-mode-toggle"
+                    checked={tracingMode}
+                    onChange={(e) => setTracingMode(e.target.checked)}
+                    aria-label="Toggle tracing mode"
+                    className="sr-only"
+                  />
+                  <div
+                    className="rounded-full relative transition-colors duration-200"
+                    style={{ width: 32, height: 18, backgroundColor: tracingMode ? '#642F35' : '#DDD0BC', cursor: 'pointer' }}
+                  >
+                    <span
+                      className="absolute top-[2px] bg-white rounded-full shadow-sm transition-transform duration-200"
+                      style={{ width: 14, height: 14, left: 2, transform: tracingMode ? 'translateX(14px)' : 'translateX(0)' }}
+                    />
+                  </div>
+                </label>
+              </div>
+
+              {/* Reference Opacity Slider */}
+              <div className="space-y-1 pt-1">
+                <div className="flex items-center justify-between text-[9px] font-mono">
+                  <span className="text-[#6B5140] uppercase">Reference Opacity</span>
+                  <span className="text-[#A85D55] font-bold">{Math.round(referenceOpacity * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.05"
+                  max="0.65"
+                  step="0.05"
+                  value={referenceOpacity}
+                  onChange={(e) => setReferenceOpacity(Number(e.target.value))}
+                  className="w-full h-1.5 bg-[#EFE5D5] rounded-lg appearance-none cursor-pointer accent-[#642F35]"
+                />
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* Keyboard shortcut hint */}
+          <div className="mt-auto pt-3 border-t border-[rgba(107,81,64,0.08)]">
+            <p className="text-[8.5px] font-mono text-[#C4B5A5] text-center leading-relaxed">
+              P = Pen · B = Brush · E = Eraser
+              <br />Ctrl+Z = Undo · Ctrl+Y = Redo
             </p>
           </div>
 
-          {/* Drag & Drop Upload Container */}
-          <div className="border-2 border-dashed border-amber-500/30 hover:border-amber-500/60 rounded-3xl p-8 text-center transition-all bg-neutral-950/40 relative">
-            <input
-              type="file"
-              accept="image/png, image/jpeg, image/webp"
-              onChange={handleUploadHandwritten}
-              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
-            />
+        </div>
+
+        {/* ── RIGHT: LARGE ARTISAN WRITING DESK & CANVAS ──────────── */}
+        <div className="flex-1 rounded-2xl bg-[#F2EBE0] border border-[rgba(107,81,64,0.22)] shadow-md p-2.5 sm:p-4 flex flex-col gap-2 relative overflow-hidden min-w-0">
+          
+          {/* Deckle Edge Paper Canvas Sheet Container */}
+          <div className="relative w-full flex-1 rounded-xl bg-[#FAF6F0] border border-[rgba(107,81,64,0.15)] shadow-inner overflow-hidden" style={{ minHeight: 360 }}>
             
-            {uploadPreview ? (
-              <div className="space-y-4">
-                <img
-                  src={uploadPreview}
-                  alt="Upload Preview"
-                  className="max-h-64 mx-auto rounded-2xl object-contain border border-amber-500/30 shadow-xl"
-                />
-                <p className="text-xs text-amber-400 font-mono">
-                  {uploadFile?.name} ({(uploadFile.size / 1024).toFixed(1)} KB)
-                </p>
-                <p className="text-[10px] text-neutral-400">Click or drag a new image to replace</p>
-              </div>
-            ) : (
-              <div className="space-y-3 py-6">
-                <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-400 mx-auto flex items-center justify-center border border-amber-500/20 shadow-gold">
-                  <Camera className="w-7 h-7" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-neutral-200">
-                    Drag and drop your calligraphy photo, or <span className="text-amber-400 underline">browse files</span>
-                  </p>
-                  <p className="text-xs text-neutral-500 mt-1">Supports PNG, JPEG, WEBP up to 10MB</p>
-                </div>
+            {/* Paper Subtle Grain Overlay */}
+            <div 
+              className="absolute inset-0 pointer-events-none opacity-25"
+              style={{
+                backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.75\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\' opacity=\'0.04\'/%3E%3C/svg%3E")'
+              }}
+            />
+
+            {/* Botanical Watercolor Corner Flourishes */}
+            <div className="absolute top-0 left-0 w-32 h-32 pointer-events-none opacity-75">
+              <svg viewBox="0 0 120 120" className="w-full h-full text-[#6B5140]" fill="none" stroke="currentColor">
+                <path d="M0,0 Q30,40 70,20 Q100,5 110,0" strokeWidth="1" stroke="rgba(107,81,64,0.4)" />
+                <path d="M15,15 Q35,5 50,20 Q30,30 15,15 Z" fill="rgba(168,93,85,0.22)" strokeWidth="0.5" />
+                <path d="M35,18 Q60,10 75,30 Q50,40 35,18 Z" fill="rgba(107,81,64,0.18)" strokeWidth="0.5" />
+                <path d="M55,15 Q85,15 95,35 Q75,45 55,15 Z" fill="rgba(180,154,104,0.22)" strokeWidth="0.5" />
+              </svg>
+            </div>
+
+            <div className="absolute bottom-0 right-0 w-40 h-40 pointer-events-none opacity-85">
+              <svg viewBox="0 0 140 140" className="w-full h-full text-[#6B5140]" fill="none" stroke="currentColor">
+                <path d="M140,140 Q100,90 40,120 Q10,135 0,140" strokeWidth="1.2" stroke="rgba(107,81,64,0.4)" />
+                <path d="M110,110 Q90,75 60,95 Q80,125 110,110 Z" fill="rgba(168,93,85,0.24)" strokeWidth="0.5" />
+                <path d="M85,105 Q60,75 40,100 Q65,120 85,105 Z" fill="rgba(180,154,104,0.24)" strokeWidth="0.5" />
+                <circle cx="120" cy="120" r="1.5" fill="#642F35" opacity="0.4" />
+                <circle cx="105" cy="130" r="1.2" fill="#642F35" opacity="0.3" />
+                <circle cx="95" cy="115" r="2" fill="#642F35" opacity="0.25" />
+              </svg>
+            </div>
+
+            {/* ── CALLIGRAPHY GUIDELINES LAYER ── */}
+            {guidePreset !== 'none' && (
+              <div className="absolute inset-0 pointer-events-none z-10 flex flex-col justify-between select-none">
+                
+                {/* 55° Diagonal Slant Guides */}
+                {(slantGuideActive || guidePreset === 'slant' || guidePreset === 'full') && (
+                  <div 
+                    className="absolute inset-0 opacity-45 pointer-events-none"
+                    style={{
+                      backgroundImage: 'repeating-linear-gradient(55deg, transparent, transparent 42px, rgba(168,93,85,0.22) 42px, rgba(168,93,85,0.22) 43px)'
+                    }}
+                  />
+                )}
+
+                {/* Optional Full Grid background */}
+                {(guidePreset === 'grid' || guidePreset === 'full') && (
+                  <div 
+                    className="absolute inset-0 opacity-20 pointer-events-none"
+                    style={{
+                      backgroundImage: 'linear-gradient(to right, rgba(107,81,64,0.2) 1px, transparent 1px), linear-gradient(to bottom, rgba(107,81,64,0.2) 1px, transparent 1px)',
+                      backgroundSize: '24px 24px'
+                    }}
+                  />
+                )}
+
+                {/* Classical Calligraphy Metric Rule Lines: Ascender, X-Height, Baseline, Descender */}
+                {(guidePreset === 'lines' || guidePreset === 'slant' || guidePreset === 'full') && (
+                  <div className="absolute inset-0 flex flex-col justify-center pointer-events-none px-4">
+                    
+                    {/* Ascender line (~22% height) */}
+                    <div className="absolute top-[22%] left-0 right-0 border-b border-dashed border-[rgba(107,81,64,0.28)] flex items-center px-4">
+                      <span className="text-[9px] font-serif italic text-[#8E7360] -translate-y-2.5">
+                        Ascender
+                      </span>
+                    </div>
+
+                    {/* X-height line (~40% height) */}
+                    <div className="absolute top-[40%] left-0 right-0 border-b border-dashed border-[rgba(107,81,64,0.28)] flex items-center px-4">
+                      <span className="text-[9px] font-serif italic text-[#8E7360] -translate-y-2.5">
+                        X-height
+                      </span>
+                    </div>
+
+                    {/* Baseline line (~68% height) */}
+                    <div className="absolute top-[68%] left-0 right-0 border-b border-[rgba(107,81,64,0.4)] flex items-center px-4">
+                      <span className="text-[9px] font-serif italic text-[#6B5140] font-semibold -translate-y-2.5">
+                        Baseline
+                      </span>
+                    </div>
+
+                    {/* Descender line (~86% height) */}
+                    <div className="absolute top-[86%] left-0 right-0 border-b border-dashed border-[rgba(107,81,64,0.28)] flex items-center px-4">
+                      <span className="text-[9px] font-serif italic text-[#8E7360] -translate-y-2.5">
+                        Descender
+                      </span>
+                    </div>
+
+                  </div>
+                )}
+
               </div>
             )}
+
+            {/* ── REFERENCE UNDERLAY LAYER (z-[12], visible through transparent canvas) ── */}
+            {showReference && (
+              <div 
+                className="absolute inset-0 pointer-events-none flex items-center select-none overflow-hidden"
+                style={{
+                  zIndex: 12,
+                  opacity: referenceOpacity,
+                  justifyContent: tracingMode ? 'center' : 'flex-start',
+                  paddingLeft: tracingMode ? 0 : 'clamp(8%, 12%, 18%)',
+                }}
+              >
+                <span
+                  className="font-script text-[#171513] font-normal leading-none select-none"
+                  style={{ fontSize: 'min(36vw, 17rem)', transform: 'translateY(-2%)' }}
+                >
+                  {selectedCharacter}
+                </span>
+              </div>
+            )}
+
+            {/* ── ARTISTIC CALLIGRAPHY OBLIQUE DIP PEN DECORATION (As shown in screenshot) ── */}
+            <div className="absolute right-4 top-1/3 pointer-events-none z-20 hidden md:block opacity-90 transition-transform duration-500 hover:scale-105">
+              <svg width="220" height="120" viewBox="0 0 220 120" fill="none">
+                {/* Oblique Dark Ebony Holder */}
+                <path d="M220,10 L140,55 L135,52 L215,8 Z" fill="#24201D" />
+                <path d="M140,55 L125,65 L120,60 L135,52 Z" fill="#3B342F" />
+                {/* Brass Flange & Gold Pointed Nib */}
+                <path d="M125,65 L105,78 L100,74 L120,60 Z" fill="#B49A68" stroke="#8A6E3B" strokeWidth="0.5" />
+                <path d="M105,78 L75,98 L72,97 L70,95 L98,72 L105,78 Z" fill="#D4AF37" stroke="#9A7B2C" strokeWidth="0.5" />
+                {/* Nib Vent Hole and Slit */}
+                <circle cx="88" cy="85" r="1.5" fill="#171513" />
+                <path d="M88,85 L72,97" stroke="#171513" strokeWidth="0.8" />
+                {/* Shadow */}
+                <ellipse cx="140" cy="85" rx="60" ry="8" fill="rgba(23,21,19,0.12)" filter="blur(6px)" />
+              </svg>
+            </div>
+
+            {/* ── INTERACTIVE INK DRAWING CANVAS (z-[20], transparent background) ── */}
+            <canvas
+              ref={canvasRef}
+              id="practice-canvas"
+              aria-label="Calligraphy practice canvas — draw with mouse or touch"
+              onMouseDown={startDrawing}
+              onMouseMove={draw}
+              onMouseUp={stopDrawing}
+              onMouseLeave={stopDrawing}
+              onTouchStart={startDrawing}
+              onTouchMove={draw}
+              onTouchEnd={stopDrawing}
+              onPointerDown={startDrawing}
+              onPointerMove={draw}
+              onPointerUp={stopDrawing}
+              onPointerCancel={stopDrawing}
+              className="absolute inset-0 w-full h-full touch-none"
+              style={{
+                zIndex: 20,
+                cursor: tool === 'eraser' ? 'cell' : 'crosshair',
+              }}
+            />
+
+            {/* Empty state — shown when canvas is blank */}
+            {strokeCount === 0 && (
+              <div
+                className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-2"
+                style={{ zIndex: 16, opacity: 0.55 }}
+              >
+                <PenTool className="w-8 h-8 text-[#C4B5A5]" />
+                <p className="font-serif text-sm text-[#8E7360]">Your practice desk is ready</p>
+                <p className="text-xs text-[#C4B5A5]">Begin your first stroke on the parchment</p>
+              </div>
+            )}
+
           </div>
 
-          {/* Action Row */}
-          <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-4 border-t border-amber-900/10">
-            <button
-              onClick={() => handleSaveUploadedWork(false)}
-              disabled={!uploadFile || uploading}
-              className="btn btn-ghost btn-sm text-xs flex items-center gap-1.5 w-full sm:w-auto"
-            >
-              <Save className="w-4 h-4" /> {uploading ? 'Uploading...' : 'Save to Practice Log (+10 XP)'}
-            </button>
+          {/* ═══════════════════════════════════════════════════════════════
+              BOTTOM CHARACTER SELECTOR (Tabs & Letter Carousel)
+              ═══════════════════════════════════════════════════════════════ */}
+          <div className="pt-2 border-t border-[rgba(107,81,64,0.12)] space-y-2">
+            
+            {/* Category Tabs */}
+            <div className="flex items-center gap-4 sm:gap-5 overflow-x-auto pb-0.5 text-xs" style={{ scrollbarWidth: 'none' }}>
+              {CHARACTER_CATEGORIES.map((cat) => {
+                const isActive = activeCategory === cat.id
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => setActiveCategory(cat.id)}
+                    className={`font-sans tracking-wide transition-all shrink-0 pb-1 relative ${
+                      isActive 
+                        ? 'text-[#642F35] font-bold' 
+                        : 'text-[#6B5140] hover:text-[#171513]'
+                    }`}
+                  >
+                    <span>{cat.label}</span>
+                    {isActive && (
+                      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#642F35] rounded-full" />
+                    )}
+                  </button>
+                )
+              })}
+            </div>
 
-            <button
-              onClick={() => handleSaveUploadedWork(true)}
-              disabled={!uploadFile || uploading}
-              className="btn btn-primary btn-sm text-xs flex items-center gap-1.5 w-full sm:w-auto shadow-gold"
-            >
-              <Sparkles className="w-4 h-4" /> Save & Send to AI Assessment →
-            </button>
+            {/* Character Cards Horizontal Carousel */}
+            <div className="relative flex items-center">
+              
+              {/* Left Scroll Chevron */}
+              <button
+                onClick={() => scrollChars('left')}
+                className="w-7 h-7 rounded-full bg-white border border-[rgba(107,81,64,0.2)] text-[#6B5140] hover:text-[#171513] hover:bg-[#FAF6F0] flex items-center justify-center shadow-xs z-10 shrink-0 mr-1.5 active:scale-95 transition-all"
+                title="Scroll previous"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              {/* Scrollable Characters Row */}
+              <div 
+                ref={charScrollRef}
+                className="flex items-center gap-1.5 overflow-x-auto flex-1 py-0.5"
+                style={{ scrollbarWidth: 'none' }}
+              >
+                {activeCharList.map((char) => {
+                  const isSelected = selectedCharacter === char
+                  const isLong = char.length > 2
+                  return (
+                    <button
+                      key={char}
+                      id={`char-${char.replace(/\s+/g, '-')}`}
+                      onClick={() => handleSelectCharacter(char)}
+                      aria-pressed={isSelected}
+                      className={`h-10 rounded-xl transition-all duration-150 flex items-center justify-center shrink-0 border ${
+                        isLong ? 'px-3' : 'w-10'
+                      } ${
+                        isSelected
+                          ? 'border-2 border-[#642F35] bg-white text-[#642F35] shadow-sm scale-105'
+                          : 'border-[rgba(107,81,64,0.18)] bg-white/80 text-[#171513] hover:bg-white hover:border-[rgba(107,81,64,0.4)]'
+                      }`}
+                    >
+                      <span className="font-script text-xl leading-none">
+                        {char}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Right Scroll Chevron */}
+              <button
+                onClick={() => scrollChars('right')}
+                className="w-7 h-7 rounded-full bg-white border border-[rgba(107,81,64,0.2)] text-[#6B5140] hover:text-[#171513] hover:bg-[#FAF6F0] flex items-center justify-center shadow-xs z-10 shrink-0 ml-1.5 active:scale-95 transition-all"
+                title="Scroll next"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          CONFIRMATION MODAL: CLEAR CANVAS
+          ═══════════════════════════════════════════════════════════════ */}
+      {clearDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fade-in">
+          <div className="bg-[#FAF6F0] rounded-2xl border border-[rgba(107,81,64,0.25)] shadow-2xl p-6 max-w-sm w-full space-y-4 text-center">
+            <div className="w-12 h-12 rounded-full bg-[#F4E8E6] text-[#A85D55] flex items-center justify-center mx-auto border border-[#D8AFA9]">
+              <Trash2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-serif text-lg font-semibold text-[#171513]">
+                Clear your current practice?
+              </h3>
+              <p className="text-xs text-[#6B5140] font-sans mt-1">
+                This will clear all ink strokes from the current parchment. Your guidelines and reference will remain.
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setClearDialogOpen(false)}
+                className="px-4 py-2 rounded-full border border-[rgba(107,81,64,0.25)] text-xs font-sans font-bold text-[#6B5140] hover:bg-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleClearConfirm}
+                className="px-5 py-2 rounded-full bg-[#A85D55] hover:bg-[#934E47] text-white text-xs font-sans font-bold transition-all shadow-xs"
+              >
+                Clear Parchment
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ─────────────────────────────────────────────────────────────
-          TAB 3: COMPARE MODE (Side-by-Side Reference vs. Attempt)
-      ───────────────────────────────────────────────────────────── */}
-      {activeTab === 'compare' && (
-        <div className="p-8 rounded-3xl bg-neutral-900 border border-amber-900/20 space-y-6 shadow-2xl">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-amber-900/10 pb-4">
-            <div>
-              <h2 className="text-2xl font-bold font-display text-neutral-100 flex items-center gap-2">
-                Side-by-Side Reference Comparison <SplitSquareVertical className="w-5 h-5 text-amber-500" />
-              </h2>
-              <p className="text-xs text-neutral-400">
-                Inspect your stroke slant, x-height, and counter-spaces directly against the master template.
+      {/* ═══════════════════════════════════════════════════════════════
+          CALLIVISION AI ANALYSIS LOADING OVERLAY
+          ═══════════════════════════════════════════════════════════════ */}
+      {submitting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" style={{ animation: 'fadeIn 0.2s ease' }}>
+          <div className="bg-[#FAF6F0] rounded-2xl border border-[rgba(107,81,64,0.25)] shadow-2xl p-8 max-w-sm w-full space-y-5 text-center">
+            
+            {/* Spinning Calligraphy Seal */}
+            <div className="relative w-16 h-16 mx-auto">
+              <div className="w-16 h-16 rounded-full border-4 border-[#642F35]/20 border-t-[#642F35] animate-spin" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <PenTool className="w-6 h-6 text-[#642F35]" />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="font-serif text-xl font-semibold text-[#171513]">
+                CalliVision AI Analysis
+              </h3>
+              <p className="text-xs text-[#6B5140] font-sans min-h-[1.25rem] transition-all duration-300">
+                {submissionStep === 'capturing' && 'Capturing high-resolution stroke raster…'}
+                {submissionStep === 'analyzing' && 'Evaluating 55° slant, stroke smoothness & counter-spaces…'}
+                {submissionStep === 'scoring'   && 'Compiling expert breakdown & updating your streak…'}
               </p>
             </div>
 
-            {previousAttempts.length > 1 && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-neutral-400 font-mono">Attempt:</span>
-                <select
-                  value={selectedAttemptForCompare?._id || ''}
-                  onChange={(e) => {
-                    const found = previousAttempts.find(a => a._id === e.target.value)
-                    if (found) setSelectedAttemptForCompare(found)
-                  }}
-                  className="input py-1 px-2.5 text-xs font-mono"
-                >
-                  {previousAttempts.map(a => (
-                    <option key={a._id} value={a._id}>
-                      Attempt #{a.attemptNumber} ({new Date(a.createdAt).toLocaleDateString()})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
+            <div className="w-full bg-[#EFE5D5] h-1.5 rounded-full overflow-hidden">
+              <div
+                className="bg-[#642F35] h-full rounded-full"
+                style={{
+                  width: submissionStep === 'capturing' ? '33%' : submissionStep === 'analyzing' ? '66%' : '90%',
+                  transition: 'width 0.6s ease',
+                }}
+              />
+            </div>
 
-          {/* Split Screen Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════
+          INSTANT AI ASSESSMENT RESULT MODAL
+          ═══════════════════════════════════════════════════════════════ */}
+      {assessmentModalData && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm"
+          style={{ animation: 'fadeIn 0.2s ease' }}
+        >
+          <div className="bg-[#FAF6F0] rounded-3xl border border-[rgba(107,81,64,0.25)] shadow-2xl p-6 sm:p-8 max-w-lg w-full space-y-5 relative overflow-y-auto" style={{ maxHeight: '90vh' }}>
             
-            {/* Box 1: Reference Master Model */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs text-neutral-400 font-mono">
-                <span>Master Reference Model</span>
-                <span className="text-amber-500">Target: "{targetReference}"</span>
-              </div>
-              <div className="aspect-[4/3] rounded-2xl bg-[#F2ECE0] border-2 border-amber-900/30 flex items-center justify-center relative overflow-hidden shadow-inner">
-                {/* 55° guide lines */}
-                <div 
-                  className="absolute inset-0 pointer-events-none opacity-20"
-                  style={{
-                    backgroundImage: 'repeating-linear-gradient(55deg, transparent, transparent 35px, #8B5A2B 36px, #8B5A2B 37px)',
-                    backgroundSize: '100% 100%'
-                  }}
-                />
-                <span className="text-[10rem] font-serif text-neutral-900 italic font-light select-none">
-                  {targetReference}
-                </span>
-                <span className="absolute bottom-3 left-3 text-[9px] px-2 py-0.5 rounded bg-neutral-900/80 text-amber-300 font-mono border border-neutral-700">
-                  Ideal 55° Slant & Stroke Geometry
-                </span>
-              </div>
-            </div>
-
-            {/* Box 2: Your Attempt */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs text-neutral-400 font-mono">
-                <span>Your Latest Attempt</span>
-                <span className="text-amber-400">
-                  {selectedAttemptForCompare ? `Attempt #${selectedAttemptForCompare.attemptNumber}` : 'Current Canvas'}
-                </span>
-              </div>
-              <div className="aspect-[4/3] rounded-2xl bg-neutral-950 border-2 border-amber-500/30 flex items-center justify-center relative overflow-hidden shadow-inner">
-                {selectedAttemptForCompare ? (
-                  <img
-                    src={selectedAttemptForCompare.imageUrl}
-                    alt="Your Practice Attempt"
-                    className="w-full h-full object-contain"
-                  />
-                ) : (
-                  <div className="text-center p-6 space-y-2 text-neutral-500">
-                    <Paintbrush className="w-8 h-8 mx-auto text-neutral-600" />
-                    <p className="text-xs">No attempt recorded yet. Draw on the digital canvas or upload an image!</p>
-                  </div>
-                )}
-                {selectedAttemptForCompare && (
-                  <span className="absolute bottom-3 left-3 text-[9px] px-2 py-0.5 rounded bg-neutral-900/80 text-neutral-300 font-mono border border-neutral-700 capitalize">
-                    {selectedAttemptForCompare.attemptType?.replace('_', ' ')}
-                  </span>
-                )}
-              </div>
-            </div>
-
-          </div>
-
-          {/* Action Row */}
-          <div className="flex justify-between items-center pt-4 border-t border-amber-900/10">
+            {/* Close Button */}
             <button
-              onClick={() => setActiveTab('canvas')}
-              className="btn btn-ghost btn-sm text-xs flex items-center gap-1.5"
+              onClick={() => setAssessmentModalData(null)}
+              className="absolute top-4 right-4 p-2 rounded-full text-[#6B5140] hover:text-[#171513] hover:bg-[rgba(107,81,64,0.1)] transition-colors"
             >
-              <RotateCcw className="w-4 h-4" /> Retry Drill on Canvas
+              <X className="w-5 h-5" />
             </button>
 
-            {selectedAttemptForCompare && (
-              <button
-                onClick={() => navigate('/progress', { state: { attemptImage: selectedAttemptForCompare.imageUrl, targetReference } })}
-                className="btn btn-primary btn-sm text-xs flex items-center gap-1.5 shadow-gold"
-              >
-                <Sparkles className="w-4 h-4" /> Run AI Assessment on this Attempt →
-              </button>
-            )}
-          </div>
+            {/* Header Stamp */}
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-[#EFE2E4] border border-[#D8AFA9] flex items-center justify-center text-[#642F35] shrink-0">
+                <Award className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-mono tracking-widest text-[#A85D55] font-bold">
+                  Practice Verified • +{assessmentModalData.xpEarned} XP
+                </span>
+                <h3 className="font-serif text-2xl font-bold text-[#171513]">
+                  Strokes Analyzed
+                </h3>
+              </div>
+            </div>
 
+            {/* Overall Score Dial & Quick Stats */}
+            <div className="p-4 rounded-2xl bg-white border border-[rgba(107,81,64,0.15)] flex items-center justify-between shadow-xs">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-[#642F35] text-[#FAF6F0] flex flex-col items-center justify-center shadow-inner">
+                  <span className="font-serif text-2xl font-bold leading-none">
+                    {assessmentModalData.assessment?.overallScore || assessmentModalData.attempt?.metrics?.overallScore || 85}
+                  </span>
+                  <span className="text-[8px] uppercase tracking-wider font-mono opacity-80 mt-0.5">/ 100</span>
+                </div>
+                <div>
+                  <h4 className="font-serif text-base font-semibold text-[#171513]">
+                    Overall Mastery
+                  </h4>
+                  <p className="text-xs text-[#6B5140] font-sans">
+                    {(assessmentModalData.assessment?.overallScore ?? assessmentModalData.attempt?.metrics?.overallScore ?? 85) >= 85
+                      ? 'Exemplary artisan quality'
+                      : 'Solid foundation with clear advancement'}
+                  </p>
+                  <p className="text-[10px] text-[#8E7360] font-sans mt-0.5">
+                    Practice time: {formatTime(elapsedSeconds)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F4E8E6] text-[#A85D55] font-mono text-xs font-bold border border-[#D8AFA9]">
+                <Flame className="w-4 h-4 fill-[#A85D55]" />
+                <span>{assessmentModalData.streak} Day Streak</span>
+              </div>
+            </div>
+
+            {/* Metric Bars Breakdown */}
+            <div className="space-y-2.5">
+              <h4 className="text-[10px] uppercase font-mono font-bold tracking-wider text-[#6B5140]">
+                Skill Breakdown
+              </h4>
+              
+              {[
+                { label: 'Letter Shape & Curvature',     val: assessmentModalData.assessment?.metrics?.letterShape        ?? assessmentModalData.attempt?.metrics?.shapeScore             ?? 88 },
+                { label: 'Stroke Consistency (Pressure)', val: assessmentModalData.assessment?.metrics?.strokeConsistency  ?? assessmentModalData.attempt?.metrics?.strokeConsistencyScore ?? 85 },
+                { label: 'Spacing & Optical Rhythm',      val: assessmentModalData.assessment?.metrics?.spacing            ?? assessmentModalData.attempt?.metrics?.spacingScore            ?? 82 },
+                { label: '55° Slant Adherence',           val: assessmentModalData.assessment?.metrics?.slant              ?? assessmentModalData.attempt?.metrics?.slantScore             ?? 86 },
+                { label: 'Baseline Consistency',          val: assessmentModalData.assessment?.metrics?.baselineConsistency ?? assessmentModalData.attempt?.metrics?.alignmentScore         ?? 89 },
+                { label: 'Stroke Smoothness',             val: assessmentModalData.assessment?.metrics?.strokeSmoothness   ?? assessmentModalData.attempt?.metrics?.smoothnessScore        ?? 84 },
+              ].map((m) => (
+                <div key={m.label} className="space-y-0.5">
+                  <div className="flex items-center justify-between text-xs font-sans">
+                    <span className="text-[#302B27] font-medium">{m.label}</span>
+                    <span className="font-mono text-[11px] font-bold text-[#642F35]">{m.val}</span>
+                  </div>
+                  <div className="w-full bg-[#EFE5D5] h-1.5 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-gradient-to-r from-[#642F35] to-[#A85D55] h-full rounded-full"
+                      style={{ width: `${m.val}%`, transition: 'width 1s cubic-bezier(0.16,1,0.3,1)' }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Qualitative Feedback */}
+            <div className="p-3.5 rounded-xl bg-[#FAF6F0] border border-[rgba(107,81,64,0.18)] space-y-2.5 text-xs">
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                <p className="text-[#302B27]">
+                  <strong>Strength: </strong>
+                  {assessmentModalData.assessment?.feedback?.goodPoints?.[0]?.replace('✓ ','') ||
+                   assessmentModalData.attempt?.feedback?.goodPoints?.[0]?.replace('✓ ','') ||
+                   'Exceptional downstroke weight balance and smooth loop entry.'}
+                </p>
+              </div>
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-[#A85D55] shrink-0 mt-0.5" />
+                <p className="text-[#302B27]">
+                  <strong>Focus Next: </strong>
+                  {assessmentModalData.assessment?.feedback?.needsImprovement?.[0]?.replace('→ ','') ||
+                   assessmentModalData.attempt?.feedback?.needsImprovement?.[0]?.replace('→ ','') ||
+                   'Maintain consistent hairline exit angles against the 55° guideline.'}
+                </p>
+              </div>
+              {(assessmentModalData.assessment?.feedback?.nextPracticeRecommendation ||
+                assessmentModalData.attempt?.feedback?.nextPracticeRecommendation) && (
+                <div className="flex items-start gap-2 pt-1.5 border-t border-[rgba(107,81,64,0.1)]">
+                  <Sparkles className="w-4 h-4 text-[#B49A68] shrink-0 mt-0.5" />
+                  <p className="text-[#302B27]">
+                    <strong>Next: </strong>
+                    {assessmentModalData.assessment?.feedback?.nextPracticeRecommendation ||
+                     assessmentModalData.attempt?.feedback?.nextPracticeRecommendation}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setAssessmentModalData(null)}
+                className="flex-1 py-2.5 rounded-full border border-[rgba(107,81,64,0.25)] text-xs font-sans font-bold text-[#302B27] hover:bg-white transition-colors"
+              >
+                Continue Practicing
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAssessmentModalData(null)
+                  navigate('/progress', { 
+                    state: { 
+                      attemptImage: assessmentModalData.imageUrl, 
+                      targetReference: selectedCharacter,
+                      assessment: assessmentModalData.assessment
+                    } 
+                  })
+                }}
+                className="flex-1 py-2.5 rounded-full bg-[#642F35] text-[#FAF6F0] hover:bg-[#50242A] text-xs font-sans font-bold transition-all shadow-md flex items-center justify-center gap-1.5"
+              >
+                <span>View Full Review</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+          </div>
         </div>
       )}
 

@@ -1,244 +1,211 @@
-import { useEffect, useState } from 'react'
-import { 
-  Sparkles, 
-  Heart, 
-  Bookmark, 
-  MessageSquare, 
-  Sliders, 
-  Compass, 
-  Image as ImageIcon, 
-  ChevronRight,
-  Smile
-} from 'lucide-react'
+import { useState } from 'react'
+import { Heart, Search, Filter, X, ArrowUpRight } from 'lucide-react'
 import toast from 'react-hot-toast'
-import axios from 'axios'
 
 export default function Community() {
-  const [mood, setMood] = useState('elegant')
-  const [posts, setPosts] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [inspiration, setInspiration] = useState(null)
-  
-  const [likes, setLikes] = useState({})
-  const [bookmarks, setBookmarks] = useState({})
+  const [activeFilter, setActiveFilter] = useState('all')
+  const [selectedArt, setSelectedArt] = useState(null)
+  const [likes, setLikes] = useState({ 1: 142, 2: 98, 3: 84, 4: 120, 5: 165, 6: 110 })
+  const [liked, setLiked] = useState({})
+  const [searchQuery, setSearchQuery] = useState('')
 
-  const moodsList = [
-    { id: 'elegant', label: '👑 Elegant Gold', colors: ['#C9A96E', '#F5F0E8', '#2C2C2C'], font: 'Cormorant Garamond' },
-    { id: 'romantic', label: '🌸 Romantic Rose', colors: ['#E8B4B8', '#F7E7E9', '#8B1A4A'], font: 'Dancing Script' },
-    { id: 'dark', label: '🦇 Dark Aesthetic', colors: ['#1A1A2E', '#16213E', '#E94560'], font: 'IM Fell English' },
-    { id: 'festive', label: '🎉 Festive Gold', colors: ['#FFD700', '#FF6B35', '#004E89'], font: 'Playfair Display' },
-    { id: 'minimal', label: '🤍 Minimal Clean', colors: ['#FFFFFF', '#F5F5F5', '#333333'], font: 'Inter' },
+  const filterPills = [
+    { id: 'all', label: 'All Works' },
+    { id: 'modern', label: 'Modern Script' },
+    { id: 'brush', label: 'Brush Lettering' },
+    { id: 'gothic', label: 'Gothic Miniscules' },
+    { id: 'flourishing', label: 'Flourishing' },
   ]
 
-  const mockPosts = [
+  const galleryItems = [
     {
-      id: 1,
-      author: { name: "Aria Thorne", avatar: "🌸" },
-      imageUrl: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&q=80&w=400",
-      caption: "Strokes of traditional Gothic style on organic cotton paper. Absolute bliss.",
-      mood: "elegant",
-      style: "Gothic",
-      likesCount: 142,
+      id: 1, title: 'Good Things take Time', author: 'Ananya Sharma', avatar: 'A', style: 'Modern Script', category: 'modern', year: '2026', score: 92,
+      caption: 'Practiced rhythmic miniscule connections with Walnut Sepia ink on cold-pressed paper.'
     },
     {
-      id: 2,
-      author: { name: "Lucas Vance", avatar: "🖋️" },
-      imageUrl: "https://images.unsplash.com/photo-1561214115-f2f134cc4912?auto=format&fit=crop&q=80&w=400",
-      caption: "Wrote wedding invite names using copperplate cursive and fine golden dust.",
-      mood: "romantic",
-      style: "Copperplate",
-      likesCount: 98,
+      id: 2, title: 'Bloom', author: 'Riya Patel', avatar: 'R', style: 'Brush Calligraphy', category: 'brush', year: '2026', score: 88,
+      caption: 'Delicate entrance flourishes combined with botanical watercolor accents.'
     },
     {
-      id: 3,
-      author: { name: "Elena Rostova", avatar: "✨" },
-      imageUrl: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?auto=format&fit=crop&q=80&w=400",
-      caption: "Minimal monograms for branding design. Love how clean it turned out.",
-      mood: "minimal",
-      style: "Minimalist",
-      likesCount: 64,
-    }
+      id: 3, title: 'Create', author: 'Karthik Raja', avatar: 'K', style: 'Gothic Miniscules', category: 'gothic', year: '2026', score: 90,
+      caption: 'Sharp 45° angle nib work with strict baseline and waistline precision.'
+    },
+    {
+      id: 4, title: 'Stay Positive', author: 'Harini V', avatar: 'H', style: 'Modern Script', category: 'modern', year: '2026', score: 86,
+      caption: 'Loose bouncy brush lettering with balanced ascender loops.'
+    },
+    {
+      id: 5, title: 'Dream', author: 'Lakshitha S M', avatar: 'L', style: 'Flourishing Script', category: 'flourishing', year: '2026', score: 94,
+      caption: 'Complex figure-eight flourishes framing a classical copperplate stem.'
+    },
+    {
+      id: 6, title: 'Be Kind', author: 'Meera Nair', avatar: 'M', style: 'Pointed Pen', category: 'modern', year: '2026', score: 89,
+      caption: 'Feather-light hairlines and slow shaded downstrokes executed on Japanese parchment.'
+    },
   ]
 
-  useEffect(() => {
-    const fetchMoodInfo = async () => {
-      setLoading(true)
-      try {
-        const res = await axios.get(`/api/recommendations/mood?mood=${mood}`)
-        setInspiration(res.data)
-      } catch (err) {
-        // Fallback to local configs
-        const selected = moodsList.find(m => m.id === mood)
-        setInspiration({ colors: selected.colors, fonts: [selected.font] })
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchMoodInfo()
-  }, [mood])
+  const filteredItems = galleryItems.filter(item => 
+    (activeFilter === 'all' || item.category === activeFilter) &&
+    item.title.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
-  const toggleLike = (postId) => {
-    setLikes(prev => {
-      const active = !prev[postId]
-      toast.success(active ? 'Artwork Liked!' : 'Unliked')
-      return { ...prev, [postId]: active }
-    })
-  }
-
-  const toggleBookmark = (postId) => {
-    setBookmarks(prev => {
-      const active = !prev[postId]
-      toast.success(active ? 'Saved to Bookmarks!' : 'Removed from bookmarks')
-      return { ...prev, [postId]: active }
-    })
+  const handleLike = (id, e) => {
+    e?.stopPropagation()
+    const isCurrentlyLiked = liked[id]
+    setLiked({ ...liked, [id]: !isCurrentlyLiked })
+    setLikes({ ...likes, [id]: isCurrentlyLiked ? likes[id] - 1 : (likes[id] || 0) + 1 })
+    toast.success(isCurrentlyLiked ? 'Like removed' : 'Appreciated artwork! +5 XP')
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-fade-in max-w-6xl mx-auto select-none pt-4">
       
-      {/* Title */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-amber-900/10 pb-4">
-        <div>
-          <h1 className="text-3xl font-semibold font-display tracking-tight text-neutral-100 flex items-center gap-2">
-            Community Gallery & Mood Inspiration <Compass className="w-5 h-5 text-amber-500 fill-amber-500/10" />
-          </h1>
-          <p className="text-xs text-neutral-400">Share your custom calligraphy designs, get inspired by artistic moods, and discover aesthetic styling palettes.</p>
-        </div>
-      </div>
+      {/* ── Header & Filter Bar ────────────────────────────────────── */}
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[rgba(107,81,64,0.14)] pb-6">
+          <div className="space-y-1">
+            <span className="text-[10px] uppercase font-sans tracking-[0.2em] text-[#A85D55] font-bold">
+              Artisan Exhibition
+            </span>
+            <h1 className="text-4xl md:text-5xl font-serif text-[#171513] font-normal tracking-tight">
+              Community Gallery
+            </h1>
+            <p className="text-sm text-[#6B5140] font-sans mt-2 max-w-lg">
+              Curated masterworks, quote compositions, and stroke studies from artists worldwide.
+            </p>
+          </div>
 
-      {/* Mood Selector Feed */}
-      <div className="space-y-4">
-        <label className="label uppercase tracking-widest font-mono text-[10px] text-amber-500/90 font-semibold">Filter Inspiration Gallery by Mood</label>
-        
-        <div className="flex gap-2.5 overflow-x-auto pb-1">
-          {moodsList.map((m) => (
+          <div className="relative w-full md:w-72">
+            <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[#8E7360]" />
+            <input
+              type="text"
+              placeholder="Search artworks..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-white text-[#171513] placeholder-[#8E7360] text-xs pl-10 pr-4 py-3 rounded-full border border-[rgba(107,81,64,0.2)] focus:outline-none focus:border-[#171513] shadow-sm transition-colors"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 overflow-x-auto pb-2">
+          {filterPills.map((pill) => (
             <button
-              key={m.id}
-              onClick={() => setMood(m.id)}
-              className={`px-4.5 py-3 rounded-2xl text-xs font-semibold whitespace-nowrap border transition-all duration-300 ${
-                mood === m.id 
-                  ? 'border-amber-500 bg-amber-500/10 text-amber-400 shadow-gold' 
-                  : 'border-neutral-800 text-neutral-400 hover:text-neutral-200'
+              key={pill.id}
+              onClick={() => setActiveFilter(pill.id)}
+              className={`px-5 py-2 rounded-full text-xs font-sans font-bold transition-all ${
+                activeFilter === pill.id
+                  ? 'bg-[#171513] text-[#FAF6F0] shadow-sm'
+                  : 'bg-white text-[#6B5140] border border-[rgba(107,81,64,0.18)] hover:bg-[#FAF6F0]'
               }`}
             >
-              {m.label}
+              {pill.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Mood Recommendation Engine Details */}
-      {inspiration && (
-        <div className="p-6 rounded-2xl bg-neutral-900 border border-amber-900/15 space-y-4 transition-all duration-500">
-          <div className="flex items-center gap-2 border-b border-amber-900/5 pb-3">
-            <Smile className="w-5 h-5 text-amber-500" />
-            <h3 className="text-sm font-semibold uppercase tracking-wider font-mono text-neutral-200 capitalize">
-              Recommended Styling Guide for: <span className="text-amber-500 font-display text-base font-normal">{mood} Mood</span>
-            </h3>
-          </div>
+      {/* ── Gallery Grid ───────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        {filteredItems.map((item) => {
+          const isLiked = liked[item.id]
+          return (
+            <div
+              key={item.id}
+              onClick={() => setSelectedArt(item)}
+              className="group flex flex-col gap-4 cursor-pointer"
+            >
+              {/* Artwork Square */}
+              <div className="w-full aspect-square rounded-2xl bg-[#FAF6F0] border border-[rgba(107,81,64,0.15)] flex flex-col items-center justify-center relative overflow-hidden group-hover:border-[#A85D55] transition-colors shadow-sm">
+                
+                {/* Score Tag */}
+                <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-mono font-bold text-[#A85D55] border border-[rgba(107,81,64,0.1)]">
+                  Score: {item.score}%
+                </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            {/* Color Palette recommendation */}
-            <div className="space-y-2">
-              <label className="label">Recommended Color Palette</label>
-              <div className="flex gap-3">
-                {inspiration.colors?.map((col, idx) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg border border-neutral-800" style={{ backgroundColor: col }} />
-                    <span className="text-xs text-neutral-400 font-mono uppercase">{col}</span>
-                  </div>
-                ))}
+                <span className="font-script text-6xl text-[#171513] select-none group-hover:scale-110 transition-transform duration-500">
+                  {item.title.split(' ')[0]}
+                </span>
+              </div>
+
+              {/* Artwork Meta */}
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="font-serif text-xl text-[#171513] font-bold group-hover:text-[#A85D55] transition-colors">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs text-[#6B5140] font-sans mt-0.5">By {item.author}</p>
+                </div>
+                
+                <button
+                  onClick={(e) => handleLike(item.id, e)}
+                  className={`flex items-center gap-1.5 p-1.5 px-3 rounded-full text-xs font-mono transition-all border ${
+                    isLiked
+                      ? 'bg-[#F4E8E6] text-[#A85D55] font-bold border-[#D8AFA9]'
+                      : 'bg-white text-[#6B5140] hover:text-[#A85D55] border-[rgba(107,81,64,0.15)]'
+                  }`}
+                  title="Appreciate artwork"
+                >
+                  <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-[#A85D55] text-[#A85D55]' : ''}`} />
+                  <span>{likes[item.id] || 0}</span>
+                </button>
               </div>
             </div>
+          )
+        })}
+      </div>
 
-            {/* Typography Suggestion */}
-            <div className="space-y-2">
-              <label className="label">Recommended Calligraphy Font Style</label>
-              <p 
-                className="text-2xl text-amber-200 transition-all"
-                style={{ fontFamily: inspiration.fonts?.[0] || 'Cormorant Garamond' }}
-              >
-                {inspiration.fonts?.[0] || 'Cormorant Garamond'} Calligraphy Preview
+      {/* ── Modal Inspector ────────────────────────────────────────── */}
+      {selectedArt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#171513]/80 backdrop-blur-sm animate-fade-in" onClick={() => setSelectedArt(null)}>
+          <div className="w-full max-w-2xl bg-[#F6F0E6] rounded-2xl overflow-hidden shadow-2xl relative" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => setSelectedArt(null)}
+              className="absolute top-4 right-4 p-2 text-[#6B5140] hover:text-[#171513] rounded-full hover:bg-white transition-colors z-10"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Artwork Display Area */}
+            <div className="w-full aspect-[16/10] bg-[#FAF6F0] border-b border-[rgba(107,81,64,0.15)] flex flex-col items-center justify-center relative overflow-hidden paper-texture">
+              <span className="font-script text-8xl text-[#171513] select-none scale-[1.2]">
+                {selectedArt.title}
+              </span>
+            </div>
+
+            {/* Metadata Area */}
+            <div className="p-8">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-3xl font-serif text-[#171513] font-normal mb-1">{selectedArt.title}</h2>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-[#171513] text-[#FAF6F0] flex items-center justify-center font-serif text-[10px]">
+                      {selectedArt.avatar}
+                    </div>
+                    <p className="text-sm font-serif font-bold text-[#6B5140]">{selectedArt.author}</p>
+                  </div>
+                </div>
+                
+                <div className="text-right">
+                  <span className="text-[10px] uppercase font-mono tracking-widest text-[#8E7360] block mb-1">
+                    {selectedArt.style}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-mono font-bold text-[#A85D55] bg-[#F4E8E6] px-2 py-0.5 rounded border border-[#D8AFA9]">
+                      AI Score: {selectedArt.score}%
+                    </span>
+                    <span className="text-xs font-mono text-[#6B5140]">❤️ {likes[selectedArt.id] || 0}</span>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-sm text-[#171513] font-sans leading-relaxed pt-4 border-t border-[rgba(107,81,64,0.1)]">
+                {selectedArt.caption}
               </p>
             </div>
 
           </div>
         </div>
       )}
-
-      {/* Community Gallery Grid */}
-      <div className="space-y-4">
-        <h3 className="section-title">Inspiration Feed</h3>
-        
-        <div className="feed-grid">
-          {mockPosts.map((post) => (
-            <div key={post.id} className="card p-5 flex flex-col justify-between hover-glow transition-all duration-300 relative overflow-hidden group">
-              
-              {/* Image box */}
-              <div className="aspect-[4/3] rounded-xl overflow-hidden mb-4 border border-amber-500/10 relative">
-                <img 
-                  src={post.imageUrl} 
-                  alt={post.caption}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                
-                {/* Style badge */}
-                <span className="absolute top-3 left-3 text-[10px] px-2 py-0.5 rounded bg-neutral-950/80 border border-amber-500/20 text-amber-400 font-semibold uppercase tracking-wider font-mono">
-                  {post.style}
-                </span>
-              </div>
-
-              {/* Caption & stats */}
-              <div className="space-y-3">
-                
-                {/* Author Info */}
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-xs">
-                    {post.author.avatar}
-                  </div>
-                  <span className="text-xs font-semibold text-neutral-200">{post.author.name}</span>
-                </div>
-
-                <p className="text-xs text-neutral-400 leading-relaxed truncate-3-lines">
-                  {post.caption}
-                </p>
-
-                {/* Interactions Row */}
-                <div className="flex justify-between items-center pt-3 border-t border-amber-900/5">
-                  <div className="flex items-center gap-3">
-                    <button 
-                      onClick={() => toggleLike(post.id)}
-                      className={`flex items-center gap-1 text-xs transition-colors ${
-                        likes[post.id] ? 'text-rose-500' : 'text-neutral-500 hover:text-rose-500'
-                      }`}
-                    >
-                      <Heart className={`w-4 h-4 ${likes[post.id] ? 'fill-rose-500' : ''}`} />
-                      <span>{post.likesCount + (likes[post.id] ? 1 : 0)}</span>
-                    </button>
-                    
-                    <button className="flex items-center gap-1 text-xs text-neutral-500 hover:text-amber-500 transition-colors">
-                      <MessageSquare className="w-4 h-4" />
-                      <span>3 comments</span>
-                    </button>
-                  </div>
-
-                  <button 
-                    onClick={() => toggleBookmark(post.id)}
-                    className={`transition-colors ${
-                      bookmarks[post.id] ? 'text-amber-500' : 'text-neutral-500 hover:text-amber-500'
-                    }`}
-                  >
-                    <Bookmark className={`w-4 h-4 ${bookmarks[post.id] ? 'fill-amber-500' : ''}`} />
-                  </button>
-                </div>
-
-              </div>
-
-            </div>
-          ))}
-        </div>
-      </div>
 
     </div>
   )

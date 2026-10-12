@@ -12,6 +12,9 @@ import Canvas     from './pages/Canvas'
 import Templates  from './pages/Templates'
 import Practice   from './pages/Practice'
 import Progress   from './pages/Progress'
+import Coach      from './pages/Coach'
+import Challenges from './pages/Challenges'
+import Certificate from './pages/Certificate'
 import Community  from './pages/Community'
 import Portfolio  from './pages/Portfolio'
 import FontPreview from './pages/FontPreview'
@@ -95,9 +98,12 @@ export default function App() {
               <Route path="/canvas/:id"  element={<Canvas />} />
               <Route path="/templates"   element={<Templates />} />
               <Route path="/practice"    element={<Practice />} />
+              <Route path="/challenges"  element={<Challenges />} />
               <Route path="/progress"    element={<Progress />} />
+              <Route path="/coach"       element={<Coach />} />
               <Route path="/community"   element={<Community />} />
               <Route path="/portfolio"   element={<Portfolio />} />
+              <Route path="/certificate" element={<Certificate />} />
               <Route path="/fonts"       element={<FontPreview />} />
               <Route path="/profile"     element={<Profile />} />
               <Route path="/mentor"      element={<RoleRoute allowedRoles={['mentor', 'admin']}><MentorStudio /></RoleRoute>} />

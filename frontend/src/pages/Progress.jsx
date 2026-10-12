@@ -1,249 +1,281 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { 
-  Sparkles, 
-  Flame, 
-  Award, 
-  Cpu, 
-  UploadCloud, 
-  Sliders, 
-  Loader2, 
-  Compass, 
-  CheckCircle,
+  Bot, 
+  RotateCcw,
+  CheckCircle2,
+  Sliders,
   TrendingUp,
-  AlertCircle
+  Clock,
+  Flame,
+  BookOpen,
+  ArrowRight,
+  ShieldCheck
 } from 'lucide-react'
+import ImageCompareSlider from '../components/common/ImageCompareSlider'
 import toast from 'react-hot-toast'
+import axios from 'axios'
+import { useAuth } from '../context/AuthContext'
 
 export default function Progress() {
-  const [analyzing, setAnalyzing] = useState(false)
-  const [analysisResult, setAnalysisResult] = useState(null)
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  
+  const incomingImage = location.state?.attemptImage || null
+  const incomingRef = location.state?.targetReference || 'a'
+  const incomingAssessment = location.state?.assessment || null
 
-  const badges = [
-    { name: "Ink Initiate", desc: "Completed onboarding & first tracing stroke", icon: "🖋️", earned: true },
-    { name: "Flourish Master", desc: "Earned 95% spacing alignment score", icon: "✨", earned: true },
-    { name: "Streaker Elite", desc: "Active practice for 3 consecutive days", icon: "🔥", earned: true },
-    { name: "Gothic Knight", desc: "Finished Gothic tracing levels completely", icon: "🏰", earned: false },
-    { name: "Royal Scriptor", desc: "Published your first design portfolio", icon: "👑", earned: false },
+  const [activeTab, setActiveTab] = useState(incomingImage ? 'assessment' : 'analytics')
+  
+  const [currentAssessment, setCurrentAssessment] = useState(null)
+  const [analyzing, setAnalyzing] = useState(false)
+  const [analyticsFilter, setAnalyticsFilter] = useState('overall')
+
+  useEffect(() => {
+    if (activeTab === 'assessment') {
+      if (incomingAssessment) {
+        setCurrentAssessment({
+          score: incomingAssessment.overallScore || 85,
+          metrics: [
+            { label: 'Letter Spacing', status: (incomingAssessment.metrics?.spacing || 82) >= 80 ? 'Good' : 'Needs work', val: incomingAssessment.metrics?.spacing || 82, color: '#171513' },
+            { label: '55° Slant Angle', status: (incomingAssessment.metrics?.slant || 80) >= 80 ? 'Good' : 'Needs work', val: incomingAssessment.metrics?.slant || 80, color: '#A85D55' },
+            { label: 'Stroke Consistency', status: (incomingAssessment.metrics?.strokeConsistency || 85) >= 80 ? 'Excellent' : 'Fair', val: incomingAssessment.metrics?.strokeConsistency || 85, color: '#B49A68' },
+            { label: 'Stroke Smoothness', status: (incomingAssessment.metrics?.strokeSmoothness || 88) >= 80 ? 'Excellent' : 'Good', val: incomingAssessment.metrics?.strokeSmoothness || 88, color: '#642F35' }
+          ],
+          feedback: incomingAssessment.feedback
+        })
+        setAnalyzing(false)
+      } else {
+        setAnalyzing(true)
+        setTimeout(() => {
+          setCurrentAssessment({
+            score: 84,
+            metrics: [
+              { label: 'Letter Spacing', status: 'Good', val: 85, color: '#171513' },
+              { label: 'Slant Angle', status: 'Needs work', val: 55, color: '#A85D55' },
+              { label: 'Stroke Thickness', status: 'Excellent', val: 95, color: '#B49A68' }
+            ]
+          })
+          setAnalyzing(false)
+        }, 600)
+      }
+    }
+  }, [activeTab, incomingAssessment])
+
+  const stats = [
+    { label: 'Exercises Completed', val: '47', icon: BookOpen },
+    { label: 'Total Practice Time', val: '12 hrs', icon: Clock },
+    { label: 'Lessons Completed', val: '18', icon: CheckCircle2 },
+    { label: 'Day Streak', val: `${user?.streak || 12}`, icon: Flame },
   ]
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-
-    setAnalyzing(true)
-    setAnalysisResult(null)
-
-    // Simulate AI computing analysis
-    setTimeout(() => {
-      setAnalyzing(false)
-      setAnalysisResult({
-        overallScore: 88,
-        slantScore: 92,
-        spacingScore: 84,
-        smoothnessScore: 90,
-        pressureScore: 86,
-        feedback: "Your letter slant matches standard chancery italics beautifully! However, focus on spacing consistency near the transitions between letters like 'm' and 'n'. Release pressure a bit faster on the upward hair strokes."
-      })
-      toast.success('AI Stroke Analysis Completed successfully!')
-    }, 3000)
-  }
-
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-fade-in max-w-6xl mx-auto select-none pt-4">
       
-      {/* Title */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-amber-900/10 pb-4">
+      {/* ── Top Tabs Banner ────────────────────────────────────────── */}
+      <div className="flex items-center justify-between pb-4 border-b border-[rgba(107,81,64,0.14)]">
         <div>
-          <h1 className="text-3xl font-semibold font-display tracking-tight text-neutral-100 flex items-center gap-2">
-            Progress & Gamification Center <Award className="w-5 h-5 text-amber-500 fill-amber-500/10" />
+          <h1 className="text-4xl font-serif text-[#171513] font-normal">
+            {activeTab === 'assessment' ? 'AI Assessment Results' : 'Progress Analytics'}
           </h1>
-          <p className="text-xs text-neutral-400">Track your practice streaks, badges, achievements, and analyze handwritten calligraphy using the AI engine.</p>
+          <p className="text-sm text-[#6B5140] font-sans mt-1">
+            {activeTab === 'assessment' ? 'Instant feedback on your strokes.' : 'Track your calligraphy journey.'}
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-1.5 bg-white p-1 rounded-full border border-[rgba(107,81,64,0.18)] shadow-sm">
+          <button
+            onClick={() => setActiveTab('assessment')}
+            className={`px-5 py-2 rounded-full text-xs font-sans font-bold transition-all ${
+              activeTab === 'assessment' ? 'bg-[#171513] text-[#FAF6F0]' : 'text-[#6B5140] hover:text-[#171513]'
+            }`}
+          >
+            Review Sheet
+          </button>
+          <button
+            onClick={() => setActiveTab('analytics')}
+            className={`px-5 py-2 rounded-full text-xs font-sans font-bold transition-all ${
+              activeTab === 'analytics' ? 'bg-[#171513] text-[#FAF6F0]' : 'text-[#6B5140] hover:text-[#171513]'
+            }`}
+          >
+            Skill Analytics
+          </button>
         </div>
       </div>
 
-      {/* Stats Cards Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        
-        <div className="stat-card flex items-center gap-4">
-          <div className="p-3.5 rounded-xl bg-amber-500/10 text-amber-400">
-            <Flame className="w-6 h-6 animate-pulse" />
-          </div>
-          <div>
-            <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-mono">Current Streak</p>
-            <p className="text-xl font-bold text-neutral-100 font-display">4 Days Active</p>
-          </div>
-        </div>
-
-        <div className="stat-card flex items-center gap-4">
-          <div className="p-3.5 rounded-xl bg-amber-500/10 text-amber-400">
-            <TrendingUp className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-mono">Lessons Finished</p>
-            <p className="text-xl font-bold text-neutral-100 font-display">6 Completed</p>
-          </div>
-        </div>
-
-        <div className="stat-card flex items-center gap-4">
-          <div className="p-3.5 rounded-xl bg-amber-500/10 text-amber-400">
-            <Award className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-mono">Total XP Score</p>
-            <p className="text-xl font-bold text-neutral-100 font-display">850 XP Level</p>
-          </div>
-        </div>
-
-        <div className="stat-card flex items-center gap-4">
-          <div className="p-3.5 rounded-xl bg-amber-500/10 text-amber-400">
-            <Sparkles className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-mono">AI Accuracy Avg</p>
-            <p className="text-xl font-bold text-neutral-100 font-display">88% Accuracy</p>
-          </div>
-        </div>
-
-      </div>
-
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Left 2 Columns - AI Practice Analysis Uploader */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="p-6 rounded-2xl bg-neutral-900 border border-amber-900/15 space-y-6">
+      {/* ── SCREEN 06: AI ASSESSMENT RESULTS ────────────────────────── */}
+      {activeTab === 'assessment' && (
+        <div className="space-y-8">
+          
+          {/* Top: Overall Score Banner */}
+          <div className="paper-sheet p-8 bg-white border border-[rgba(107,81,64,0.2)] flex items-center justify-between shadow-sm relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-radial from-[#A85D55]/10 to-transparent rounded-full blur-2xl pointer-events-none -mr-12 -mt-12" />
             
-            <div className="flex items-center gap-2 text-amber-500 border-b border-amber-900/10 pb-4">
-              <Cpu className="w-5 h-5 animate-pulse" />
-              <h3 className="text-base font-semibold font-display text-neutral-200">AI Practice Stroke Analyzer</h3>
+            <div className="flex items-center gap-4 relative z-10">
+              <div className="w-16 h-16 rounded-full bg-[#171513] flex items-center justify-center border-4 border-[#F4E8E6]">
+                <Bot className="w-8 h-8 text-[#FAF6F0]" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-2xl font-serif text-[#171513] font-bold">CalliCoach AI Assessment</h2>
+                  <span className="flex items-center gap-1 text-[10px] uppercase font-mono bg-[#EFE5D5] text-[#A85D55] px-2 py-0.5 rounded-full font-bold border border-[rgba(168,93,85,0.3)]">
+                    <ShieldCheck size={12} /> Verified Result
+                  </span>
+                </div>
+                <p className="text-sm text-[#6B5140] font-sans mt-0.5">Evaluation for token: "{incomingRef}"</p>
+              </div>
             </div>
 
-            <p className="text-xs text-neutral-400 leading-relaxed">
-              Snap a clear photo of your handwritten paper letters and upload it. The neural engine analyzes slant alignments, strokes consistency, pressure levels, and provides immediate suggestions for improvement.
-            </p>
+            <div className="flex items-baseline gap-2 relative z-10">
+              <span className="text-[10px] uppercase font-mono tracking-widest text-[#6B5140] font-bold pb-2">Overall Score</span>
+              <span className="text-6xl font-serif font-normal text-[#171513]">
+                {analyzing ? '--' : currentAssessment?.score || 84}
+              </span>
+              <span className="text-xl font-sans text-[#A85D55] font-bold">/ 100</span>
+            </div>
+          </div>
 
-            {/* Upload Area */}
-            <div className="relative border-2 border-dashed border-amber-900/20 hover:border-amber-500/40 rounded-2xl bg-neutral-950 p-8 text-center transition-all duration-300">
-              <input 
-                type="file" 
-                accept="image/*" 
-                onChange={handleFileUpload} 
-                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                disabled={analyzing}
-              />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            {/* Left side: Original Attempt Canvas Preview */}
+            <div className="space-y-3">
+              <span className="text-[11px] uppercase font-mono tracking-widest text-[#171513] font-bold">Original Attempt</span>
+              <div className="aspect-[4/3] rounded-2xl bg-[#FAF6F0] border-2 border-[rgba(107,81,64,0.2)] p-4 slant-55-pattern shadow-inner flex flex-col justify-center items-center relative">
+                {analyzing ? (
+                  <div className="flex flex-col items-center text-[#A85D55] animate-pulse">
+                    <Bot className="w-12 h-12 mb-2" />
+                    <span className="text-xs font-mono font-bold">Analyzing Strokes...</span>
+                  </div>
+                ) : incomingImage ? (
+                  <img src={incomingImage} alt="Attempt" className="w-full h-full object-contain mix-blend-multiply" />
+                ) : (
+                  <span className="font-script text-[10rem] text-[#171513] opacity-90">{incomingRef}</span>
+                )}
+              </div>
+              <button onClick={() => navigate(`/practice?ref=${incomingRef}`)} className="btn-outline-ink text-xs py-2.5 px-6 w-full flex items-center justify-center gap-2">
+                <RotateCcw size={14} /> Retake Practice
+              </button>
+            </div>
+
+            {/* Right side: AI Feedback Breakdown */}
+            <div className="space-y-6">
+              <span className="text-[11px] uppercase font-mono tracking-widest text-[#171513] font-bold">AI Feedback Breakdown</span>
               
-              {analyzing ? (
-                <div className="space-y-4 py-6">
-                  <Loader2 className="w-12 h-12 text-amber-500 animate-spin mx-auto" />
+              <div className="space-y-4">
+                {(currentAssessment?.metrics || [
+                  { label: 'Letter Spacing', status: 'Good', val: 85, color: '#171513' },
+                  { label: 'Slant Angle', status: 'Needs work', val: 55, color: '#A85D55' },
+                  { label: 'Stroke Thickness', status: 'Excellent', val: 95, color: '#B49A68' }
+                ]).map((metric, idx) => (
+                  <div key={idx} className="paper-sheet p-5 bg-white border border-[rgba(107,81,64,0.15)] flex flex-col justify-between hover:border-[rgba(107,81,64,0.3)] transition-colors group">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-sm font-serif font-bold text-[#171513] group-hover:text-[#A85D55] transition-colors">{metric.label}</span>
+                      <span className={`text-[10px] uppercase font-mono px-2 py-0.5 rounded font-bold`} 
+                            style={{ backgroundColor: `${metric.color}20`, color: metric.color }}>
+                        {metric.status}
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 bg-[#EFE5D5] rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-1000" style={{ width: analyzing ? '0%' : `${metric.val}%`, backgroundColor: metric.color }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-5 rounded-2xl bg-[#F4E8E6] border border-[#D8AFA9] space-y-2 mt-4 shadow-sm">
+                <h4 className="text-xs font-serif font-bold uppercase tracking-wider text-[#A85D55] flex items-center gap-1.5">
+                  <Sliders size={14} /> AI Recommendation
+                </h4>
+                <p className="text-xs text-[#6B5140] leading-relaxed">
+                  Focus heavily on your 55° slant angle consistency. Revisit the "Modern Calligraphy Basics" module for guided ascender drills.
+                </p>
+                <button onClick={() => navigate('/courses')} className="btn-burgundy text-xs py-2 px-5 mt-2 shadow-sm font-bold w-max">
+                  Go to Course
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── SCREEN 07: PROGRESS ANALYTICS ────────────────────────────── */}
+      {activeTab === 'analytics' && (
+        <div className="space-y-8 animate-fade-in">
+          
+          <div className="flex items-center gap-2 overflow-x-auto pb-2">
+            {['overall', 'time', 'skills', 'improvement'].map((f) => (
+              <button
+                key={f}
+                onClick={() => setAnalyticsFilter(f)}
+                className={`px-5 py-1.5 rounded-full text-xs font-sans font-bold transition-all capitalize ${
+                  analyticsFilter === f ? 'bg-[#171513] text-[#FAF6F0]' : 'bg-white text-[#6B5140] border border-[rgba(107,81,64,0.18)]'
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+
+          {/* 4 Stats Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+            {stats.map((s, idx) => {
+              const Icon = s.icon
+              return (
+                <div key={idx} className="paper-sheet p-5 bg-white border border-[rgba(107,81,64,0.18)] flex items-center gap-4 hover:border-[#A85D55] transition-colors">
+                  <div className="w-12 h-12 rounded-2xl bg-[#FAF6F0] text-[#A85D55] flex items-center justify-center border border-[rgba(107,81,64,0.1)]">
+                    <Icon className="w-5 h-5" />
+                  </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-neutral-200">Processing Stroke Geometry...</h4>
-                    <p className="text-xs text-neutral-500 mt-1">Analyzing line alignment, slant levels and spacing curves...</p>
+                    <p className="text-[10px] uppercase font-mono text-[#6B5140] font-bold">{s.label}</p>
+                    <p className="text-2xl font-serif font-bold text-[#171513]">{s.val}</p>
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-4 py-4">
-                  <UploadCloud className="w-12 h-12 text-amber-500/60 mx-auto" />
-                  <div>
-                    <h4 className="text-sm font-semibold text-neutral-200">Select Practice Snapshot Image</h4>
-                    <p className="text-xs text-neutral-500 mt-1">Supports JPG, PNG, WEBP files up to 5MB.</p>
-                  </div>
-                  <button className="btn btn-ghost btn-sm">Browse Files</button>
-                </div>
-              )}
+              )
+            })}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="paper-sheet p-6 bg-white border border-[rgba(107,81,64,0.18)] space-y-4 shadow-sm">
+               <h3 className="text-xs uppercase font-sans tracking-widest text-[#171513] font-bold border-b border-[rgba(107,81,64,0.12)] pb-2">
+                Attempt Evolution (Before / After)
+              </h3>
+              <ImageCompareSlider beforeScore={61} afterScore={84} beforeLabel="Day 01" afterLabel="Day 12" />
             </div>
 
-            {/* Analysis Results Display */}
-            {analysisResult && (
-              <div className="p-6 rounded-xl bg-neutral-950 border border-amber-500/20 space-y-6 animate-fade-in">
-                <div className="flex justify-between items-center border-b border-amber-900/10 pb-3">
-                  <h4 className="text-sm font-semibold uppercase tracking-wider font-mono text-amber-400">AI Stroke Report</h4>
-                  <span className="text-xs text-neutral-400 font-mono">Overall Accuracy Score: <b className="text-amber-400 text-sm">{analysisResult.overallScore}%</b></span>
-                </div>
-
-                {/* Score Indicators */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs font-mono">
-                      <span>55° Slant Match</span>
-                      <span className="text-amber-500">{analysisResult.slantScore}%</span>
+            <div className="paper-sheet p-6 bg-white border border-[rgba(107,81,64,0.18)] space-y-5 shadow-sm flex flex-col justify-between">
+              <div>
+                <h3 className="text-xs uppercase font-sans tracking-widest text-[#171513] font-bold border-b border-[rgba(107,81,64,0.12)] pb-2">
+                  Skill Progression Heatmap
+                </h3>
+                <div className="space-y-4 mt-5 text-xs font-mono">
+                  {[
+                    { label: 'Letter Formation', val: 92 },
+                    { label: 'Spacing', val: 76 },
+                    { label: 'Alignment', val: 88 },
+                    { label: 'Stroke Control', val: 68 },
+                  ].map((m, idx) => (
+                    <div key={idx} className="space-y-1.5">
+                      <div className="flex justify-between">
+                        <span className="text-[#6B5140]">{m.label}</span>
+                        <span className="font-bold text-[#171513]">{m.val}%</span>
+                      </div>
+                      <div className="w-full h-2 bg-[#FAF6F0] rounded-full overflow-hidden border border-[rgba(107,81,64,0.05)]">
+                        <div className="h-full bg-[#A85D55] rounded-full" style={{ width: `${m.val}%`, backgroundColor: m.val >= 85 ? '#171513' : '#A85D55' }} />
+                      </div>
                     </div>
-                    <div className="progress-bar"><div className="progress-fill" style={{ width: `${analysisResult.slantScore}%` }} /></div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs font-mono">
-                      <span>Letter Spacing</span>
-                      <span className="text-amber-500">{analysisResult.spacingScore}%</span>
-                    </div>
-                    <div className="progress-bar"><div className="progress-fill" style={{ width: `${analysisResult.spacingScore}%` }} /></div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs font-mono">
-                      <span>Stroke Smoothness</span>
-                      <span className="text-amber-500">{analysisResult.smoothnessScore}%</span>
-                    </div>
-                    <div className="progress-bar"><div className="progress-fill" style={{ width: `${analysisResult.smoothnessScore}%` }} /></div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs font-mono">
-                      <span>Pressure Balance</span>
-                      <span className="text-amber-500">{analysisResult.pressureScore}%</span>
-                    </div>
-                    <div className="progress-bar"><div className="progress-fill" style={{ width: `${analysisResult.pressureScore}%` }} /></div>
-                  </div>
-                </div>
-
-                {/* AI Advice */}
-                <div className="p-4 rounded-xl bg-amber-950/20 border border-amber-500/20 flex gap-3">
-                  <Sliders className="w-5 h-5 text-amber-400 flex-shrink-0" />
-                  <div>
-                    <h5 className="text-xs uppercase font-mono text-amber-400 tracking-wider font-semibold">AI Tutor Improvement Advice</h5>
-                    <p className="text-xs text-neutral-300 leading-relaxed mt-1.5">{analysisResult.feedback}</p>
-                  </div>
+                  ))}
                 </div>
               </div>
-            )}
-
-          </div>
-        </div>
-
-        {/* Right Column - Gamification achievements & Badges */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="p-6 rounded-2xl bg-neutral-900 border border-amber-900/15 space-y-6">
-            
-            <div className="flex items-center gap-2 border-b border-amber-900/10 pb-4">
-              <Award className="w-5 h-5 text-amber-500" />
-              <h3 className="text-base font-semibold font-display text-neutral-200">Badges & Achievements</h3>
+              <button className="text-xs font-sans font-bold text-[#A85D55] hover:text-[#171513] flex items-center gap-1 w-max self-end mt-4">
+                Download Detailed PDF Report <ArrowRight size={14} />
+              </button>
             </div>
-
-            <div className="space-y-4">
-              {badges.map((badge, idx) => (
-                <div 
-                  key={idx} 
-                  className={`flex items-center justify-between p-3.5 rounded-xl border transition-all ${
-                    badge.earned 
-                      ? 'border-amber-950/40 bg-neutral-950/40' 
-                      : 'border-neutral-800 bg-neutral-900/20 opacity-40'
-                  }`}
-                >
-                  <div className="flex items-center gap-3.5">
-                    <span className="text-2xl">{badge.icon}</span>
-                    <div>
-                      <h4 className="text-sm font-semibold text-neutral-200">{badge.name}</h4>
-                      <p className="text-[10px] text-neutral-400 mt-0.5">{badge.desc}</p>
-                    </div>
-                  </div>
-                  {badge.earned && <CheckCircle className="w-5 h-5 text-amber-400 flex-shrink-0" />}
-                </div>
-              ))}
-            </div>
-
           </div>
-        </div>
 
-      </div>
+        </div>
+      )}
 
     </div>
   )

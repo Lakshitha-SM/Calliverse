@@ -1,267 +1,209 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { 
   Sparkles, 
   Flame, 
-  Clock, 
   Compass, 
   ArrowUpRight, 
-  BookOpen, 
-  Play, 
-  FileText, 
-  Download,
-  Share2,
-  Bookmark,
-  ChevronRight,
-  TrendingUp,
-  Cpu
+  TrendingUp, 
+  Bot, 
+  Target,
+  Trophy,
+  ArrowRight,
+  Clock,
+  PlayCircle
 } from 'lucide-react'
-import axios from 'axios'
-import toast from 'react-hot-toast'
+import InkStroke from '../components/common/InkStroke'
 
 export default function Dashboard() {
   const { user } = useAuth()
-  const [recommendations, setRecommendations] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [quoteIdx, setQuoteIdx] = useState(0)
-
-  // Hardcoded premium quotes for Calligraphy reveal
-  const quotes = [
-    { text: "Art is the trace of a soul.", author: "Traditional Proverb" },
-    { text: "Patience and practice create perfection.", author: "Edward Johnston" },
-    { text: "Letters are things, not pictures of things.", author: "Eric Gill" },
-    { text: "The stroke of a pen is a stroke of a heart.", author: "Aesthetic Script" }
-  ]
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const res = await axios.get('/api/recommendations')
-        setRecommendations(res.data)
-      } catch (err) {
-        toast.error('Failed to load personalized recommendations')
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchDashboardData()
-
-    // Pick a daily quote based on the day
-    const day = new Date().getDate()
-    setQuoteIdx(day % quotes.length)
-  }, [])
-
-  const currentQuote = quotes[quoteIdx]
+  
+  const studentName = user?.name?.split(' ')[0] || 'Lakshitha'
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      {/* Dynamic Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold font-display tracking-tight text-neutral-100">
-            Welcome back, <span className="gradient-text font-serif italic">{user?.name}</span> ✨
-          </h1>
-          <p className="text-sm text-neutral-400 mt-1">
-            Ready to craft some beautiful letters today?
-          </p>
-        </div>
-
-        {/* Streaks and XP badges */}
-        <div className="flex gap-4">
-          <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-amber-950/30 border border-amber-500/20 shadow-gold">
-            <Flame className="w-5 h-5 text-amber-500 fill-amber-500/10 animate-bounce" />
-            <div>
-              <p className="text-xs text-neutral-400 font-medium">Streak</p>
-              <p className="text-sm font-semibold text-amber-400">4 Days Active</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-neutral-900 border border-amber-900/20">
-            <TrendingUp className="w-5 h-5 text-amber-500" />
-            <div>
-              <p className="text-xs text-neutral-400 font-medium">Progress Level</p>
-              <p className="text-sm font-semibold text-neutral-200 capitalize">{user?.skillLevel || 'Beginner'}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="space-y-10 animate-fade-in max-w-6xl mx-auto pt-4">
+      
+      {/* ── Top Section: Header & Progress Graph ─────────────────── */}
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-6 border-b border-[rgba(107,81,64,0.12)]">
         
-        {/* Left 2 Columns */}
-        <div className="lg:col-span-2 space-y-8">
-          
-          {/* Daily Inspirational Calligraphy Card */}
-          <div className="quote-card hover-glow transition-all duration-500 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(201,169,110,0.08),transparent_70%)]" />
-            <div className="relative space-y-6">
-              <span className="badge mx-auto select-none uppercase tracking-widest text-[9px]">Daily Inspirational Card</span>
-              <h2 className="text-4xl md:text-5xl font-script text-amber-200 py-4 leading-normal leading-[1.3] animate-glow select-none">
-                "{currentQuote.text}"
-              </h2>
-              <p className="text-sm text-amber-500/80 font-display font-medium tracking-wide">
-                — {currentQuote.author}
-              </p>
-              
-              <div className="divider opacity-30 max-w-xs mx-auto" />
-              
-              <div className="flex items-center justify-center gap-3">
-                <button 
-                  onClick={() => toast.success('Artwork saved successfully!')}
-                  className="p-2 rounded-full hover:bg-amber-500/10 text-neutral-400 hover:text-amber-400 border border-neutral-800 transition-all duration-300"
-                  title="Save Design"
-                >
-                  <Bookmark className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={() => {
-                    navigator.clipboard.writeText(currentQuote.text)
-                    toast.success('Quote copied to clipboard!')
-                  }}
-                  className="p-2 rounded-full hover:bg-amber-500/10 text-neutral-400 hover:text-amber-400 border border-neutral-800 transition-all duration-300"
-                  title="Share Art Card"
-                >
-                  <Share2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="space-y-4">
-            <h2 className="section-title">Quick Studio Actions</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Link to="/courses" className="p-4 rounded-2xl bg-neutral-900 border border-amber-900/15 hover:border-amber-500/40 hover:bg-neutral-900/80 transition-all duration-300 flex flex-col justify-between h-32 relative group overflow-hidden">
-                <div className="absolute right-3 top-3 p-1.5 rounded-lg bg-amber-500/10 text-amber-400 group-hover:scale-110 transition-transform">
-                  <Compass className="w-4 h-4" />
-                </div>
-                <div className="pt-6">
-                  <h3 className="text-sm font-semibold font-display text-neutral-200">Learning Paths</h3>
-                  <p className="text-[10px] text-neutral-400 mt-0.5">Explore structured curricula</p>
-                </div>
-              </Link>
-
-              <Link to="/practice" className="p-4 rounded-2xl bg-neutral-900 border border-amber-900/15 hover:border-amber-500/40 hover:bg-neutral-900/80 transition-all duration-300 flex flex-col justify-between h-32 relative group overflow-hidden">
-                <div className="absolute right-3 top-3 p-1.5 rounded-lg bg-amber-500/10 text-amber-400 group-hover:scale-110 transition-transform">
-                  <BookOpen className="w-4 h-4" />
-                </div>
-                <div className="pt-6">
-                  <h3 className="text-sm font-semibold font-display text-neutral-200">Practice Lab</h3>
-                  <p className="text-[10px] text-neutral-400 mt-0.5">Guided trace & drills</p>
-                </div>
-              </Link>
-
-              <Link to="/canvas" className="p-4 rounded-2xl bg-neutral-900 border border-amber-900/15 hover:border-amber-500/40 hover:bg-neutral-900/80 transition-all duration-300 flex flex-col justify-between h-32 relative group overflow-hidden">
-                <div className="absolute right-3 top-3 p-1.5 rounded-lg bg-amber-500/10 text-amber-400 group-hover:scale-110 transition-transform">
-                  <ArrowUpRight className="w-4 h-4" />
-                </div>
-                <div className="pt-6">
-                  <h3 className="text-sm font-semibold font-display text-neutral-200">Open Canvas</h3>
-                  <p className="text-[10px] text-neutral-400 mt-0.5">Freehand ink studio</p>
-                </div>
-              </Link>
-
-              <Link to="/fonts" className="p-4 rounded-2xl bg-neutral-900 border border-amber-900/15 hover:border-amber-500/40 hover:bg-neutral-900/80 transition-all duration-300 flex flex-col justify-between h-32 relative group overflow-hidden">
-                <div className="absolute right-3 top-3 p-1.5 rounded-lg bg-amber-500/10 text-amber-400 group-hover:scale-110 transition-transform">
-                  <Sparkles className="w-4 h-4" />
-                </div>
-                <div className="pt-6">
-                  <h3 className="text-sm font-semibold font-display text-neutral-200">Style Preview</h3>
-                  <p className="text-[10px] text-neutral-400 mt-0.5">Realtime font test</p>
-                </div>
-              </Link>
-            </div>
-          </div>
-
-          {/* Recommended Tutorials */}
-          <div className="space-y-4">
-            <h2 className="section-title">Recommended Practice & Lessons</h2>
-            {loading ? (
-              <div className="h-28 flex items-center justify-center">
-                <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {recommendations?.tutorials.map((t) => (
-                  <div key={t.id} className="p-4 rounded-xl border border-amber-900/10 bg-neutral-900/40 flex items-center justify-between hover-glow transition-all duration-300">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400">
-                        <Play className="w-4 h-4 fill-amber-400/10" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-semibold font-display text-neutral-200">{t.title}</h4>
-                        <p className="text-xs text-neutral-400 mt-0.5">{t.duration} • Style: {t.style}</p>
-                      </div>
-                    </div>
-                    <Link to="/practice" className="p-2 rounded-lg bg-neutral-850 hover:bg-amber-500 hover:text-neutral-950 text-amber-400 transition-all duration-300">
-                      <ChevronRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
+        {/* Header Left */}
+        <div className="space-y-2">
+          <h1 className="text-4xl md:text-5xl font-serif text-[#171513] font-normal tracking-tight">
+            Good morning, <span className="font-serif italic font-bold text-[#A85D55]">{studentName}</span> ✨
+          </h1>
+          <p className="text-[13px] text-[#6B5140] font-sans">
+            Your creative journey continues. Ready to practice your rhythm today?
+          </p>
+          <InkStroke color="#A85D55" width={170} height={18} className="mt-3" />
         </div>
 
-        {/* Right Sidebar Column */}
-        <div className="space-y-8">
-          
-          {/* Daily Challenge Card */}
-          <div className="p-6 rounded-2xl bg-gradient-to-br from-neutral-900 to-amber-950/20 border border-amber-500/20 space-y-4 relative overflow-hidden">
-            <div className="absolute -right-8 -top-8 w-24 h-24 bg-amber-500/5 rounded-full filter blur-xl" />
-            <div className="flex items-center gap-2 text-amber-400">
-              <Compass className="w-5 h-5 animate-spin" style={{ animationDuration: '10s' }} />
-              <span className="text-xs uppercase font-mono tracking-widest font-semibold">Daily Challenge</span>
-            </div>
-            <h3 className="text-lg font-semibold font-display text-neutral-200">
-              {recommendations?.dailyChallenge || 'Practice traditional curves!'}
-            </h3>
-            <p className="text-xs text-neutral-400 leading-relaxed">
-              Complete today's challenge to keep your daily streak alive and unlock custom premium calligraphy brushes.
-            </p>
-            <Link to="/practice" className="w-full btn btn-primary btn-sm flex items-center justify-center gap-1">
-              Start Challenge <ArrowUpRight className="w-3.5 h-3.5" />
-            </Link>
+        {/* Header Right: Mini Progress Graph */}
+        <div className="w-full lg:w-72 p-5 bg-white border border-[rgba(107,81,64,0.15)] flex flex-col justify-between shadow-sm rounded-xl">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] uppercase font-mono tracking-widest text-[#171513] font-bold">
+              Weekly Progress
+            </span>
+            <span className="text-[10px] text-[#A85D55] font-bold bg-[#F4E8E6] px-2 py-0.5 rounded-full">+12%</span>
           </div>
-
-          {/* AI Stroke Analysis Quick Portal */}
-          <div className="p-6 rounded-2xl bg-neutral-900/50 border border-amber-900/10 space-y-4">
-            <div className="flex items-center gap-2 text-amber-500">
-              <Cpu className="w-5 h-5" />
-              <h3 className="text-sm font-semibold uppercase tracking-wider font-mono">AI Practice Analyzer</h3>
-            </div>
-            <p className="text-xs text-neutral-400 leading-relaxed">
-              Upload a snapshot of your handwritten paper letters. The AI analyzer will instantly compute stroke alignment, pressure consistency, and letter slanting guides.
-            </p>
-            <Link to="/progress" className="w-full btn btn-outline btn-sm flex items-center justify-center gap-1 hover:border-amber-500/30 hover:text-amber-400">
-              Go To Analyzer <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
+          <div className="h-20 w-full flex items-end justify-between gap-1.5">
+            {[40, 65, 30, 80, 50, 90, 75].map((h, i) => (
+              <div key={i} className="w-full bg-[#FAF6F0] rounded-t-md relative overflow-hidden h-full group">
+                <div 
+                  className="absolute bottom-0 w-full bg-[#D8AFA9] group-hover:bg-[#A85D55] rounded-t-md transition-all duration-700" 
+                  style={{ height: `${h}%` }} 
+                />
+              </div>
+            ))}
           </div>
-
-          {/* Premium Brush Recommendations */}
-          <div className="p-6 rounded-2xl bg-neutral-900/30 border border-amber-900/10 space-y-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wider font-mono text-neutral-200">Recommended Brushes</h3>
-            <div className="space-y-3">
-              {recommendations?.brushes.map((b, idx) => (
-                <div key={idx} className="flex justify-between items-center pb-2 border-b border-amber-900/5 last:border-b-0 last:pb-0">
-                  <div>
-                    <h4 className="text-xs font-semibold text-neutral-200">{b.name}</h4>
-                    <p className="text-[10px] text-amber-600 uppercase tracking-widest mt-0.5">{b.bestFor.join(', ')}</p>
-                  </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-mono capitalize">
-                    {b.level}
-                  </span>
-                </div>
-              ))}
-            </div>
+          <div className="flex justify-between text-[9px] font-mono text-[#8E7360] mt-2 px-1">
+            <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
           </div>
-
         </div>
 
       </div>
+
+      {/* ── 3 Main Status Cards ────────────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        {/* Card 1: Daily Practice Target */}
+        <div className="p-6 bg-gradient-to-br from-white to-[#FAF6F0] border border-[rgba(107,81,64,0.18)] hover:border-[#A85D55] transition-all flex flex-col justify-between min-h-[180px] rounded-xl shadow-sm group">
+          <div className="flex items-start justify-between">
+            <div className="w-10 h-10 rounded-full bg-[#F4E8E6] text-[#A85D55] flex items-center justify-center">
+              <Clock className="w-5 h-5" strokeWidth={1.5} />
+            </div>
+            <span className="text-[9px] uppercase font-mono tracking-wider text-[#6B5140] font-bold">Today</span>
+          </div>
+          
+          <div className="mt-4">
+            <p className="text-[10px] uppercase font-sans tracking-widest text-[#6B5140] mb-1">
+              Daily Practice Target
+            </p>
+            <h3 className="text-3xl font-serif text-[#171513] font-normal leading-none">
+              <span className="font-bold">12 min</span> <span className="text-lg text-[#8E7360]">left</span>
+            </h3>
+            
+            <div className="mt-4 bg-[#EFE5D5] h-1.5 rounded-full w-full overflow-hidden">
+              <div className="bg-[#A85D55] h-full rounded-full transition-all duration-1000" style={{ width: '60%' }} />
+            </div>
+            <div className="flex justify-between text-[9px] font-mono text-[#6B5140] mt-2 uppercase">
+              <span>18m done</span>
+              <span>30m goal</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 2: Current Course */}
+        <div className="p-6 bg-white border border-[rgba(107,81,64,0.18)] hover:border-[#A85D55] transition-all flex flex-col justify-between min-h-[180px] rounded-xl shadow-sm">
+          <div className="flex items-start justify-between">
+            <div className="w-10 h-10 rounded-full bg-[#FAF6F0] text-[#171513] flex items-center justify-center border border-[rgba(107,81,64,0.1)]">
+              <Compass className="w-5 h-5" strokeWidth={1.5} />
+            </div>
+            <span className="text-[9px] uppercase font-mono tracking-wider text-[#6B5140] font-bold">In Progress</span>
+          </div>
+          
+          <div className="mt-4">
+            <p className="text-[10px] uppercase font-sans tracking-widest text-[#6B5140] mb-1">
+              Current Course
+            </p>
+            <h3 className="text-2xl font-serif text-[#171513] font-medium leading-tight mb-4">
+              Modern Calligraphy<br />Basics
+            </h3>
+            
+            <Link to="/courses/modern-basics" className="btn-ink text-[10px] py-1.5 px-4 w-full justify-between">
+              <span>Continue Lesson</span> <ArrowRight size={12} />
+            </Link>
+          </div>
+        </div>
+
+        {/* Card 3: Recent AI Assessment */}
+        <div className="p-6 bg-[#171513] text-[#FAF6F0] border border-[#302B27] hover:border-[#A85D55] transition-all flex flex-col justify-between min-h-[180px] rounded-xl shadow-md">
+          <div className="flex items-start justify-between">
+            <div className="w-10 h-10 rounded-full bg-[#302B27] text-[#A85D55] flex items-center justify-center">
+              <Bot className="w-5 h-5" strokeWidth={1.5} />
+            </div>
+            <span className="text-[9px] uppercase font-mono tracking-wider text-[#C4B5A5] font-bold">Latest Review</span>
+          </div>
+          
+          <div className="mt-4">
+            <p className="text-[10px] uppercase font-sans tracking-widest text-[#C4B5A5] mb-1">
+              AI Assessment Score
+            </p>
+            <div className="flex items-baseline gap-2 leading-none">
+              <h3 className="text-[42px] font-serif font-normal text-white">84</h3>
+              <span className="text-[11px] font-sans text-[#A85D55] font-bold">/ 100</span>
+            </div>
+            
+            <p className="text-[11px] text-[#8E7360] font-sans mt-3 leading-relaxed border-l-2 border-[#A85D55] pl-2">
+              Great improvement in letter spacing. Focus on ascender consistency next.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      {/* ── Recommended Practice Section ───────────────────────────── */}
+      <div className="pt-6">
+        <div className="flex items-end justify-between mb-5 border-b border-[rgba(107,81,64,0.1)] pb-3">
+          <h2 className="text-2xl font-serif text-[#171513]">Recommended Practice</h2>
+          <Link to="/practice" className="text-[10px] font-mono uppercase tracking-widest font-bold text-[#A85D55] hover:text-[#171513] flex items-center gap-1 transition-colors">
+            View All Drills <ArrowRight size={12} />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          
+          {/* Practice Item 1 */}
+          <div className="bg-white rounded-xl p-4 flex gap-4 items-center group cursor-pointer border border-[rgba(107,81,64,0.15)] hover:border-[#A85D55] shadow-sm transition-all">
+            <div className="w-16 h-16 rounded-xl bg-[#FAF6F0] border border-[rgba(107,81,64,0.15)] flex items-center justify-center text-3xl font-script text-[#171513] group-hover:bg-[#F4E8E6] transition-colors shadow-inner">
+              a
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-serif font-bold text-[#171513] group-hover:text-[#A85D55] transition-colors leading-tight">Basic Ovals & As</h4>
+              <p className="text-[11px] text-[#6B5140] font-sans line-clamp-1 mt-0.5">Foundational copperplate strokes.</p>
+              <div className="flex items-center gap-2 mt-2.5">
+                <span className="text-[9px] font-mono bg-[#EFE5D5] px-2 py-0.5 rounded text-[#6B5140] font-bold">10 MIN</span>
+                <span className="text-[9px] font-mono bg-[#EFE5D5] px-2 py-0.5 rounded text-[#6B5140] font-bold">WARMUP</span>
+              </div>
+            </div>
+            <PlayCircle className="w-6 h-6 text-[#8E7360] group-hover:text-[#A85D55] transition-colors shrink-0" strokeWidth={1.5} />
+          </div>
+
+          {/* Practice Item 2 */}
+          <div className="bg-white rounded-xl p-4 flex gap-4 items-center group cursor-pointer border border-[rgba(107,81,64,0.15)] hover:border-[#A85D55] shadow-sm transition-all">
+            <div className="w-16 h-16 rounded-xl bg-[#FAF6F0] border border-[rgba(107,81,64,0.15)] flex items-center justify-center text-3xl font-script text-[#171513] group-hover:bg-[#F4E8E6] transition-colors shadow-inner">
+              ll
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-serif font-bold text-[#171513] group-hover:text-[#A85D55] transition-colors leading-tight">Ascender Loops</h4>
+              <p className="text-[11px] text-[#6B5140] font-sans line-clamp-1 mt-0.5">Maintaining parallel slants.</p>
+              <div className="flex items-center gap-2 mt-2.5">
+                <span className="text-[9px] font-mono bg-[#EFE5D5] px-2 py-0.5 rounded text-[#6B5140] font-bold">15 MIN</span>
+                <span className="text-[9px] font-mono bg-[#F4E8E6] px-2 py-0.5 rounded text-[#A85D55] font-bold border border-[#D8AFA9]/50">FOCUS</span>
+              </div>
+            </div>
+            <PlayCircle className="w-6 h-6 text-[#8E7360] group-hover:text-[#A85D55] transition-colors shrink-0" strokeWidth={1.5} />
+          </div>
+
+          {/* Practice Item 3 */}
+          <div className="bg-white rounded-xl p-4 flex gap-4 items-center group cursor-pointer border border-[rgba(107,81,64,0.15)] hover:border-[#A85D55] shadow-sm transition-all">
+            <div className="w-16 h-16 rounded-xl bg-[#FAF6F0] border border-[rgba(107,81,64,0.15)] flex items-center justify-center text-3xl font-script text-[#171513] group-hover:bg-[#F4E8E6] transition-colors shadow-inner">
+              &
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-serif font-bold text-[#171513] group-hover:text-[#A85D55] transition-colors leading-tight">Flourished Ampersand</h4>
+              <p className="text-[11px] text-[#6B5140] font-sans line-clamp-1 mt-0.5">Creative challenge of the day.</p>
+              <div className="flex items-center gap-2 mt-2.5">
+                <span className="text-[9px] font-mono bg-[#EFE5D5] px-2 py-0.5 rounded text-[#6B5140] font-bold">20 MIN</span>
+                <span className="text-[9px] font-mono bg-[#FAF6F0] px-2 py-0.5 rounded text-[#B49A68] font-bold border border-[#B49A68]/30">CHALLENGE</span>
+              </div>
+            </div>
+            <PlayCircle className="w-6 h-6 text-[#8E7360] group-hover:text-[#A85D55] transition-colors shrink-0" strokeWidth={1.5} />
+          </div>
+
+        </div>
+      </div>
+
     </div>
   )
 }

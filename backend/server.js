@@ -1,9 +1,10 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const dotenv = require('dotenv');
-const connectDB = require('./config/db');
 
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '.env') });
+const connectDB = require('./config/db');
 connectDB();
 
 const app = express();
@@ -11,8 +12,6 @@ const app = express();
 app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-
-const path = require('path');
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -27,6 +26,8 @@ app.use('/api/courses', require('./routes/courses'));
 app.use('/api/lessons', require('./routes/lessons'));
 app.use('/api/exercises', require('./routes/exercises'));
 app.use('/api/practice', require('./routes/practice'));
+app.use('/api/assessment', require('./routes/assessment'));
+app.use('/api/coach', require('./routes/coach'));
 
 app.get('/', (req, res) => res.json({ message: 'CalliVerse API Running ✨' }));
 

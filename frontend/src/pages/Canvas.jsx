@@ -259,36 +259,53 @@ export default function Canvas() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in relative z-10">
-      
+    <div className="space-y-6 animate-fade-in relative z-10 max-w-6xl">
       {/* Editor Header / Top Actions */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-amber-900/10 pb-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-charcoal/10 pb-4">
         <div>
-          <h1 className="text-2xl font-semibold font-display text-neutral-100 flex items-center gap-2">
-            CalliVerse Studio Canvas <Sparkles className="w-5 h-5 text-amber-500 fill-amber-500/10 animate-pulse" />
+          <h1 className="text-3xl font-serif font-bold text-ink flex items-center gap-2">
+            Freeform Calligraphy Canvas <Sparkles className="w-5 h-5 text-gold animate-pulse" />
           </h1>
-          <p className="text-xs text-neutral-400">Craft elegant vector & raster calligraphy styles with ink effects.</p>
+          <p className="text-xs text-charcoal/70 font-sans">Craft custom vector strokes, flourishes, and typography compositions on virtual paper.</p>
         </div>
 
         {/* Undo, Redo, Clear, Share */}
         <div className="flex items-center gap-2 flex-wrap">
-          <button onClick={handleUndo} className="p-2.5 rounded-xl bg-neutral-900 border border-amber-900/20 text-neutral-400 hover:text-amber-400 transition-all duration-300" title="Undo">
+          <button 
+            onClick={handleUndo} 
+            className="p-2.5 rounded-xl bg-white border border-charcoal/15 text-charcoal/70 hover:text-ink hover:border-charcoal/30 shadow-sm transition-all" 
+            title="Undo"
+          >
             <Undo className="w-4 h-4" />
           </button>
-          <button onClick={handleRedo} className="p-2.5 rounded-xl bg-neutral-900 border border-amber-900/20 text-neutral-400 hover:text-amber-400 transition-all duration-300" title="Redo">
+          <button 
+            onClick={handleRedo} 
+            className="p-2.5 rounded-xl bg-white border border-charcoal/15 text-charcoal/70 hover:text-ink hover:border-charcoal/30 shadow-sm transition-all" 
+            title="Redo"
+          >
             <Redo className="w-4 h-4" />
           </button>
-          <button onClick={clearCanvas} className="p-2.5 rounded-xl bg-neutral-900 border border-red-900/30 text-neutral-400 hover:text-red-400 transition-all duration-300" title="Clear Canvas">
+          <button 
+            onClick={clearCanvas} 
+            className="p-2.5 rounded-xl bg-white border border-charcoal/15 text-charcoal/70 hover:text-burgundy hover:border-burgundy/30 shadow-sm transition-all" 
+            title="Clear Canvas"
+          >
             <Trash2 className="w-4 h-4" />
           </button>
           
-          <div className="w-px h-6 bg-amber-900/20 mx-2" />
+          <div className="w-px h-6 bg-charcoal/10 mx-2" />
 
-          <button onClick={exportDesign} className="btn btn-ghost btn-sm flex items-center gap-1.5 hover:border-amber-500">
+          <button 
+            onClick={exportDesign} 
+            className="btn-outline-ink px-4 py-2 rounded-xl text-xs font-serif font-semibold flex items-center gap-1.5"
+          >
             <Download className="w-4 h-4" /> Export PNG
           </button>
 
-          <button onClick={handleSaveAndShare} className="btn btn-primary btn-sm flex items-center gap-1.5">
+          <button 
+            onClick={handleSaveAndShare} 
+            className="btn-burgundy px-5 py-2 rounded-xl text-xs font-serif font-semibold flex items-center gap-1.5 shadow-paper"
+          >
             <Share2 className="w-4 h-4" /> Save & Share QR
           </button>
         </div>
@@ -296,18 +313,18 @@ export default function Canvas() {
 
       {/* Editor Body */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        
         {/* Left Side Control Panel */}
-        <div className="lg:col-span-1 space-y-6">
-          
+        <div className="lg:col-span-1 space-y-5">
           {/* Active Tool Selector */}
-          <div className="p-4 rounded-xl bg-neutral-900 border border-amber-900/15 space-y-3">
-            <label className="label">Active Studio Tool</label>
+          <div className="paper-texture p-5 rounded-2xl border border-charcoal/10 shadow-paper space-y-3">
+            <label className="text-xs uppercase tracking-widest font-mono text-warm-brown font-semibold block">
+              Active Writing Tool
+            </label>
             <div className="grid grid-cols-2 gap-2">
               <button 
                 onClick={() => setTool('select')}
-                className={`p-3 rounded-lg text-xs font-semibold flex flex-col items-center gap-1.5 border transition-all duration-300 ${
-                  tool === 'select' ? 'border-amber-500 bg-amber-500/10 text-amber-400' : 'border-neutral-800 text-neutral-400 hover:text-neutral-200'
+                className={`p-3 rounded-xl text-xs font-serif font-semibold flex flex-col items-center gap-1.5 border transition-all ${
+                  tool === 'select' ? 'border-ink bg-ink text-paper shadow-sm' : 'border-charcoal/15 bg-white text-charcoal/70 hover:text-ink'
                 }`}
               >
                 <MousePointer className="w-4 h-4" />
@@ -316,8 +333,8 @@ export default function Canvas() {
               
               <button 
                 onClick={() => setTool('pen')}
-                className={`p-3 rounded-lg text-xs font-semibold flex flex-col items-center gap-1.5 border transition-all duration-300 ${
-                  tool === 'pen' ? 'border-amber-500 bg-amber-500/10 text-amber-400' : 'border-neutral-800 text-neutral-400 hover:text-neutral-200'
+                className={`p-3 rounded-xl text-xs font-serif font-semibold flex flex-col items-center gap-1.5 border transition-all ${
+                  tool === 'pen' ? 'border-ink bg-ink text-paper shadow-sm' : 'border-charcoal/15 bg-white text-charcoal/70 hover:text-ink'
                 }`}
               >
                 <Sparkles className="w-4 h-4" />
@@ -326,8 +343,8 @@ export default function Canvas() {
 
               <button 
                 onClick={() => setTool('eraser')}
-                className={`p-3 rounded-lg text-xs font-semibold flex flex-col items-center gap-1.5 border transition-all duration-300 ${
-                  tool === 'eraser' ? 'border-amber-500 bg-amber-500/10 text-amber-400' : 'border-neutral-800 text-neutral-400 hover:text-neutral-200'
+                className={`p-3 rounded-xl text-xs font-serif font-semibold flex flex-col items-center gap-1.5 border transition-all ${
+                  tool === 'eraser' ? 'border-ink bg-ink text-paper shadow-sm' : 'border-charcoal/15 bg-white text-charcoal/70 hover:text-ink'
                 }`}
               >
                 <Eraser className="w-4 h-4" />
@@ -336,8 +353,8 @@ export default function Canvas() {
 
               <button 
                 onClick={() => setTool('text')}
-                className={`p-3 rounded-lg text-xs font-semibold flex flex-col items-center gap-1.5 border transition-all duration-300 ${
-                  tool === 'text' ? 'border-amber-500 bg-amber-500/10 text-amber-400' : 'border-neutral-800 text-neutral-400 hover:text-neutral-200'
+                className={`p-3 rounded-xl text-xs font-serif font-semibold flex flex-col items-center gap-1.5 border transition-all ${
+                  tool === 'text' ? 'border-ink bg-ink text-paper shadow-sm' : 'border-charcoal/15 bg-white text-charcoal/70 hover:text-ink'
                 }`}
               >
                 <Type className="w-4 h-4" />
@@ -347,28 +364,30 @@ export default function Canvas() {
           </div>
 
           {/* Color & Ink Feathering Panel */}
-          <div className="p-4 rounded-xl bg-neutral-900 border border-amber-900/15 space-y-4">
-            <h3 className="text-xs uppercase font-mono tracking-wider text-neutral-300 font-semibold">Brush & Color System</h3>
+          <div className="paper-texture p-5 rounded-2xl border border-charcoal/10 shadow-paper space-y-4">
+            <h3 className="text-xs uppercase font-mono tracking-wider text-warm-brown font-semibold">
+              Ink & Nib Settings
+            </h3>
             
             {/* Color Picker */}
             <div className="space-y-1.5">
-              <label className="label">Ink Color</label>
+              <label className="text-xs font-serif text-charcoal/70 block">Ink Shade</label>
               <div className="flex gap-2 items-center">
                 <input 
                   type="color" 
                   value={color} 
                   onChange={(e) => setColor(e.target.value)} 
-                  className="w-10 h-10 rounded-lg cursor-pointer bg-transparent border-0"
+                  className="w-9 h-9 rounded-lg cursor-pointer bg-transparent border-0"
                 />
-                <span className="text-xs text-neutral-400 font-mono uppercase">{color}</span>
+                <span className="text-xs text-charcoal/80 font-mono uppercase">{color}</span>
               </div>
             </div>
 
             {/* Brush Size */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center text-xs">
-                <label className="label m-0">Pen Nib Size</label>
-                <span className="text-amber-500 font-mono">{brushSize}px</span>
+                <label className="text-xs font-serif text-charcoal/70">Nib Width</label>
+                <span className="text-warm-brown font-mono font-bold">{brushSize}px</span>
               </div>
               <input 
                 type="range" 
@@ -376,15 +395,15 @@ export default function Canvas() {
                 max="50" 
                 value={brushSize} 
                 onChange={(e) => setBrushSize(e.target.value)} 
-                className="w-full accent-amber-500"
+                className="w-full accent-warm-brown"
               />
             </div>
 
             {/* Bleeding / Shadow Blur (feathering simulation) */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center text-xs">
-                <label className="label m-0">Ink Feathering (Bleed)</label>
-                <span className="text-amber-500 font-mono">{shadowBlur}px</span>
+                <label className="text-xs font-serif text-charcoal/70">Ink Bleed (Feather)</label>
+                <span className="text-warm-brown font-mono font-bold">{shadowBlur}px</span>
               </div>
               <input 
                 type="range" 
@@ -392,42 +411,42 @@ export default function Canvas() {
                 max="15" 
                 value={shadowBlur} 
                 onChange={(e) => setShadowBlur(e.target.value)} 
-                className="w-full accent-amber-500"
+                className="w-full accent-warm-brown"
               />
             </div>
           </div>
 
           {/* Paper Textures Select */}
-          <div className="p-4 rounded-xl bg-neutral-900 border border-amber-900/15 space-y-3">
-            <label className="label">Background Paper Texture</label>
+          <div className="paper-texture p-5 rounded-2xl border border-charcoal/10 shadow-paper space-y-3">
+            <label className="text-xs uppercase font-mono tracking-wider text-warm-brown font-semibold block">
+              Paper Texture
+            </label>
             <div className="grid grid-cols-2 gap-2">
               {textures.map((t) => (
                 <button
                   key={t.id}
                   onClick={() => applyTexture(t.id)}
-                  className={`p-2.5 rounded-lg text-xs font-medium border transition-all duration-300 text-center ${
-                    paperTexture === t.id ? 'border-amber-500 text-amber-400' : 'border-neutral-800 text-neutral-400 hover:text-neutral-200'
+                  className={`p-2.5 rounded-xl text-xs font-serif border transition-all text-center ${
+                    paperTexture === t.id ? 'border-ink ring-2 ring-warm-brown/30 font-bold' : 'border-charcoal/15 hover:border-charcoal/30'
                   }`}
                   style={{ backgroundColor: t.bg }}
                 >
-                  <span className={t.id === 'black' ? 'text-neutral-200' : 'text-neutral-800'}>{t.name}</span>
+                  <span className={t.id === 'black' ? 'text-white' : 'text-charcoal'}>{t.name}</span>
                 </button>
               ))}
             </div>
           </div>
-
         </div>
 
-        {/* Middle Columns - Digital Canva Draw Area */}
+        {/* Middle Columns - Digital Canvas Draw Area */}
         <div className="lg:col-span-2 space-y-4">
-          
           {/* Slant and Grid Overlays Toggles */}
-          <div className="flex items-center justify-between p-3 rounded-xl bg-neutral-900 border border-amber-900/15">
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between p-3 rounded-2xl bg-white border border-charcoal/10 shadow-sm">
+            <div className="flex items-center gap-3">
               <button 
                 onClick={() => setGridVisible(!gridVisible)}
-                className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all ${
-                  gridVisible ? 'border-amber-500 bg-amber-500/10 text-amber-400' : 'border-neutral-800 text-neutral-400'
+                className={`flex items-center gap-1.5 text-xs font-serif px-3 py-1.5 rounded-xl border transition-all ${
+                  gridVisible ? 'border-ink bg-ink text-paper shadow-sm' : 'border-charcoal/15 text-charcoal/70 hover:text-ink'
                 }`}
               >
                 <Grid className="w-3.5 h-3.5" />
@@ -436,8 +455,8 @@ export default function Canvas() {
 
               <button 
                 onClick={() => setSlantGuide(!slantGuide)}
-                className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all ${
-                  slantGuide ? 'border-amber-500 bg-amber-500/10 text-amber-400' : 'border-neutral-800 text-neutral-400'
+                className={`flex items-center gap-1.5 text-xs font-serif px-3 py-1.5 rounded-xl border transition-all ${
+                  slantGuide ? 'border-ink bg-ink text-paper shadow-sm' : 'border-charcoal/15 text-charcoal/70 hover:text-ink'
                 }`}
               >
                 <Sliders className="w-3.5 h-3.5" />
@@ -445,14 +464,13 @@ export default function Canvas() {
               </button>
             </div>
 
-            <div className="text-xs text-neutral-500 flex items-center gap-1">
-              <Info className="w-3.5 h-3.5" /> Canvas size: 750 x 520
+            <div className="text-xs text-charcoal/50 font-mono flex items-center gap-1">
+              <Info className="w-3.5 h-3.5" /> 750 × 520 px
             </div>
           </div>
 
           {/* Actual Canvas wrapper */}
-          <div className="relative border border-amber-900/30 rounded-2xl overflow-hidden shadow-2xl bg-white flex items-center justify-center">
-            
+          <div className="relative border border-charcoal/20 rounded-3xl overflow-hidden shadow-paper bg-white flex items-center justify-center p-2">
             {/* Grid overlay */}
             {gridVisible && (
               <div 
@@ -469,52 +487,51 @@ export default function Canvas() {
               <div 
                 className="absolute inset-0 pointer-events-none opacity-[0.08]"
                 style={{
-                  backgroundImage: 'repeating-linear-gradient(55deg, transparent, transparent 35px, #C9A96E 36px, #C9A96E 38px)',
+                  backgroundImage: 'repeating-linear-gradient(55deg, transparent, transparent 35px, #6B5140 36px, #6B5140 38px)',
                   backgroundSize: '100% 100%'
                 }}
               />
             )}
 
-            <canvas id="drawing-canvas" ref={canvasRef} className="max-w-full" />
+            <canvas id="drawing-canvas" ref={canvasRef} className="max-w-full rounded-2xl" />
           </div>
         </div>
 
         {/* Right Side Tools - Text Layer Customizer */}
-        <div className="lg:col-span-1 space-y-6">
-          
+        <div className="lg:col-span-1 space-y-5">
           {tool === 'text' ? (
-            <div className="p-5 rounded-2xl bg-neutral-900 border border-amber-900/20 space-y-5 animate-fade-in">
-              <div className="flex items-center gap-2 text-amber-400">
-                <Type className="w-4 h-4 animate-bounce" />
-                <h3 className="text-sm font-semibold uppercase tracking-wider font-mono">Typography Layer</h3>
+            <div className="paper-texture p-5 rounded-2xl border border-charcoal/10 shadow-paper space-y-4 animate-fade-in">
+              <div className="flex items-center gap-2 text-ink">
+                <Type className="w-4 h-4 text-warm-brown" />
+                <h3 className="text-xs uppercase font-mono tracking-wider font-semibold">Typography Layer</h3>
               </div>
 
               {/* Text Input */}
               <div className="space-y-1">
-                <label className="label">Custom Text</label>
+                <label className="text-xs font-serif text-charcoal/70 block">Custom Calligraphy Text</label>
                 <input 
                   type="text" 
                   value={textVal} 
                   onChange={(e) => setTextVal(e.target.value)} 
                   placeholder="Enter calligraphy text"
-                  className="input"
+                  className="w-full p-2.5 rounded-xl bg-white border border-charcoal/15 text-xs text-ink focus:outline-none focus:border-warm-brown"
                 />
               </div>
 
               {/* Font Selector */}
               <div className="space-y-1.5">
-                <label className="label">Calligraphy Font Style</label>
-                <div className="grid grid-cols-1 gap-2">
+                <label className="text-xs font-serif text-charcoal/70 block">Font Specimen</label>
+                <div className="grid grid-cols-1 gap-1.5 max-h-48 overflow-y-auto pr-1">
                   {fonts.map((f) => (
                     <button
                       key={f}
                       onClick={() => setActiveFont(f)}
-                      className={`p-2.5 rounded-lg text-left text-xs border transition-all duration-300 ${
-                        activeFont === f ? 'border-amber-500 text-amber-400 bg-amber-500/5' : 'border-neutral-800 text-neutral-400 hover:text-neutral-200'
+                      className={`p-2.5 rounded-xl text-left text-xs border transition-all ${
+                        activeFont === f ? 'border-ink bg-white font-bold text-ink shadow-sm' : 'border-charcoal/10 bg-cream/40 text-charcoal/70 hover:text-ink'
                       }`}
                       style={{ fontFamily: f }}
                     >
-                      {f} Style Preview
+                      {f}
                     </button>
                   ))}
                 </div>
@@ -522,51 +539,48 @@ export default function Canvas() {
 
               <button 
                 onClick={addText}
-                className="w-full btn btn-primary btn-sm flex items-center justify-center gap-1.5"
+                className="w-full btn-ink py-2.5 rounded-xl text-xs font-serif font-semibold flex items-center justify-center gap-1.5 shadow-sm"
               >
                 <Plus className="w-4 h-4" /> Place on Canvas
               </button>
             </div>
           ) : (
-            <div className="p-5 rounded-2xl bg-neutral-900 border border-amber-900/20 space-y-5">
-              <div className="flex items-center gap-2 text-neutral-300">
-                <Layers className="w-4 h-4" />
-                <h3 className="text-sm font-semibold uppercase tracking-wider font-mono">Decorative Shapes</h3>
+            <div className="paper-texture p-5 rounded-2xl border border-charcoal/10 shadow-paper space-y-4">
+              <div className="flex items-center gap-2 text-ink">
+                <Layers className="w-4 h-4 text-warm-brown" />
+                <h3 className="text-xs uppercase font-mono tracking-wider font-semibold">Flourish Frames</h3>
               </div>
-              <p className="text-xs text-neutral-400 leading-relaxed">
-                Add vector shape outlines to create stunning monograms, borders, or logo layouts on your canvas.
+              <p className="text-xs text-charcoal/70 leading-relaxed font-sans">
+                Add delicate vector border frames to create monograms or seals on your canvas.
               </p>
 
               <div className="grid grid-cols-2 gap-2">
                 <button 
                   onClick={() => addShape('square')}
-                  className="p-3 rounded-lg border border-neutral-800 text-xs font-semibold flex flex-col items-center gap-1.5 text-neutral-400 hover:border-amber-500 hover:text-amber-400 transition-all duration-300"
+                  className="p-3 rounded-xl border border-charcoal/15 bg-white text-xs font-serif font-semibold flex flex-col items-center gap-1.5 text-charcoal/80 hover:border-ink hover:text-ink transition-all shadow-sm"
                 >
                   <Square className="w-4 h-4" />
                   Border Square
                 </button>
                 <button 
                   onClick={() => addShape('circle')}
-                  className="p-3 rounded-lg border border-neutral-800 text-xs font-semibold flex flex-col items-center gap-1.5 text-neutral-400 hover:border-amber-500 hover:text-amber-400 transition-all duration-300"
+                  className="p-3 rounded-xl border border-charcoal/15 bg-white text-xs font-serif font-semibold flex flex-col items-center gap-1.5 text-charcoal/80 hover:border-ink hover:text-ink transition-all shadow-sm"
                 >
                   <CircleIcon className="w-4 h-4" />
                   Border Circle
                 </button>
               </div>
 
-              <div className="p-4 rounded-xl bg-neutral-950 border border-amber-950/20 space-y-2.5">
-                <p className="text-[10px] text-amber-500 uppercase tracking-widest font-mono font-medium">Quick Tip</p>
-                <p className="text-[11px] text-neutral-400 leading-normal">
-                  To edit/rotate added shape outlines or text layers, activate the <b>Select / Move</b> tool, select the object and drag its corners.
+              <div className="p-3.5 rounded-xl bg-warm-brown/5 border border-warm-brown/15 space-y-1.5">
+                <p className="text-[10px] text-warm-brown uppercase tracking-widest font-mono font-bold">Studio Hint</p>
+                <p className="text-[11px] text-charcoal/70 leading-normal">
+                  To scale or rotate placed shapes, switch to <strong>Select / Move</strong> tool and adjust corner bounding handles.
                 </p>
               </div>
             </div>
           )}
-
         </div>
-
       </div>
-
     </div>
   )
 }

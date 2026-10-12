@@ -31,6 +31,12 @@ export const AuthProvider = ({ children }) => {
     setUser(null)
   }
 
+  const updateUser = (data) => {
+    const updated = { ...user, ...data }
+    localStorage.setItem('cv_user', JSON.stringify(updated))
+    setUser(updated)
+  }
+
   const switchRole = async (newRole) => {
     try {
       const res = await axios.put('/api/users/role', { role: newRole })

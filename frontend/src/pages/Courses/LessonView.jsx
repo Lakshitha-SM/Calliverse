@@ -1,20 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { 
-  BookOpen, 
-  Sparkles, 
-  Clock, 
   ArrowLeft, 
   CheckCircle2, 
   Play, 
-  Compass, 
-  Award, 
-  Sliders, 
   Paintbrush, 
-  Zap,
-  Target,
-  ArrowRight
+  ArrowRight,
+  Clock,
+  Check,
+  ChevronRight,
+  BookOpen,
+  Sliders,
+  Volume2
 } from 'lucide-react'
+import InkStroke from '../../components/common/InkStroke'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import { useAuth } from '../../context/AuthContext'
@@ -23,47 +22,40 @@ export default function LessonView() {
   const { idOrSlug } = useParams()
   const { user, updateUser } = useAuth()
   const navigate = useNavigate()
+  
+  const [activeStep, setActiveStep] = useState('downstrokes')
   const [lesson, setLesson] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [completing, setCompleting] = useState(false)
-  const [isCompleted, setIsCompleted] = useState(false)
+
+  const lessonSteps = [
+    { id: 'intro', label: 'Introduction' },
+    { id: 'upstrokes', label: 'Upstrokes (Hairlines)' },
+    { id: 'downstrokes', label: 'Downstrokes (Shaded)' },
+    { id: 'curves', label: 'Compound Curves' },
+    { id: 'loops', label: 'Oval Loops' },
+    { id: 'task', label: 'Practice Task' },
+    { id: 'quiz', label: 'Knowledge Check' },
+  ]
+
+  const learningChecklist = [
+    'Understand fundamental stroke geometry',
+    'Control pen pressure transitions',
+    'Create consistent 55° diagonal lines',
+    'Build involuntary muscle memory'
+  ]
 
   useEffect(() => {
     const fetchLesson = async () => {
       try {
         const res = await axios.get(`/api/lessons/${idOrSlug}`)
         setLesson(res.data)
-      } catch (err) {
-        // Fallback demo lesson if backend is not queried
+      } catch {
+        // Fallback default lesson
         setLesson({
-          _id: 'l1',
           title: 'Basic Strokes & Pressure Control',
-          category: 'beginner',
-          moduleName: 'Stroke Foundations',
-          difficulty: 'easy',
-          estimatedMinutes: 15,
-          learningObjectives: [
-            'Differentiate between hairline light upstrokes and shaded downstrokes',
-            'Maintain a steady 55-degree slant guide alignment',
-            'Control pressure transitions without hand wobble'
-          ],
-          explanation: 'Calligraphy is built entirely on the principle of contrasting stroke weight. When the pen or brush moves upwards or sideways, light feather pressure is applied, creating a delicate hairline. When moving downwards, steady downward pressure flexes the nib or brush tip to create a rich, shaded stroke.',
-          demonstration: {
-            steps: [
-              'Hold the brush at a 45-degree angle relative to the paper.',
-              'Lightly glide upwards for 2cm with feather-light touch.',
-              'Pause at the peak, then draw downwards applying gentle, even pressure.',
-              'Release pressure just before reaching the baseline.'
-            ],
-            proTip: 'Breathe out slowly as you execute downward strokes to prevent micro-tremors in your wrist.',
-            penAngle: '45-55 degrees'
-          },
-          practiceTask: {
-            taskPrompt: 'Practice 10 downward vertical strokes and 10 upward hairlines matching the 55° guide.',
-            referenceLetterOrWord: 'A',
-            targetScore: 80,
-            focusMetric: 'Stroke width contrast and slant consistency'
-          }
+          level: 'Beginner',
+          module: 'Module 01: Foundations',
+          targetRef: '|'
         })
       } finally {
         setLoading(false)
@@ -72,179 +64,193 @@ export default function LessonView() {
     fetchLesson()
   }, [idOrSlug])
 
-  const handleCompleteLesson = async () => {
-    if (!lesson?._id) return
-    setCompleting(true)
-    try {
-      const res = await axios.post(`/api/lessons/${lesson._id}/complete`)
-      setIsCompleted(true)
-      if (res.data.user) updateUser(res.data.user)
-      toast.success(res.data.message || 'Lesson completed! +20 XP awarded 🎉')
-    } catch (err) {
-      setIsCompleted(true)
-      toast.success('Lesson marked complete! +20 XP awarded 🎉')
-    } finally {
-      setCompleting(false)
-    }
-  }
-
-  const handleLaunchPracticeLab = () => {
-    const targetRef = lesson?.practiceTask?.referenceLetterOrWord || 'A'
-    navigate(`/practice?ref=${encodeURIComponent(targetRef)}&title=${encodeURIComponent(lesson?.title || '')}`)
-  }
-
-  if (loading && !lesson) {
-    return (
-      <div className="p-12 text-center text-neutral-400 font-mono text-xs flex items-center justify-center gap-2">
-        <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-        Loading lesson tutorial...
-      </div>
-    )
-  }
-
   return (
-    <div className="space-y-8 animate-fade-in max-w-4xl mx-auto">
-      {/* Top Navigation */}
-      <div className="flex items-center justify-between">
-        <Link to="/courses" className="text-xs text-neutral-400 hover:text-amber-400 flex items-center gap-1.5 transition-colors">
-          <ArrowLeft className="w-4 h-4" /> All Courses
+    <div className="space-y-6 animate-fade-in max-w-6xl mx-auto select-none">
+      
+      {/* Top Breadcrumb Nav */}
+      <div className="flex items-center justify-between text-xs text-[#6B5140] pb-2 border-b border-[rgba(107,81,64,0.12)]">
+        <Link to="/courses" className="inline-flex items-center gap-1.5 hover:text-[#171513] font-medium">
+          <ArrowLeft className="w-3.5 h-3.5" /> Back to Learning Paths
         </Link>
-        <span className="text-xs text-neutral-500 font-mono uppercase">
-          {lesson?.moduleName || 'Curriculum'}
+        <span className="font-mono text-[11px] text-[#A85D55] font-bold">
+          Beginner • Lesson 01
         </span>
       </div>
 
-      {/* Lesson Header Card */}
-      <div className="p-8 rounded-3xl bg-neutral-900 border border-amber-900/20 space-y-4 shadow-2xl relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-64 h-64 bg-amber-500/5 rounded-full filter blur-3xl pointer-events-none" />
+      {/* ── 3-Column Digital Calligraphy Workbook (Matching Screen #5) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* Left Column (3 Cols): Workbook Index Navigation */}
+        <div className="lg:col-span-3 paper-sheet p-5 space-y-4 bg-white border border-[rgba(107,81,64,0.16)]">
+          <div className="border-b border-[rgba(107,81,64,0.12)] pb-3">
+            <h3 className="text-xs uppercase font-sans tracking-widest text-[#171513] font-bold">
+              Lesson Contents
+            </h3>
+            <p className="text-[10px] text-[#6B5140] font-sans">Module 01: Basic Strokes</p>
+          </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          <span className="text-[10px] px-3 py-0.5 rounded-full font-mono uppercase font-bold tracking-wider bg-amber-500/15 text-amber-300 border border-amber-500/25">
-            {lesson?.category} Level
-          </span>
-          <span className="text-xs text-neutral-400 font-mono flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5 text-amber-500" /> {lesson?.estimatedMinutes || 15} Mins
-          </span>
-          <span className="text-xs text-neutral-400 font-mono">•</span>
-          <span className="text-xs text-amber-400 font-mono capitalize">
-            {lesson?.difficulty} Difficulty
-          </span>
+          <nav className="space-y-1">
+            {lessonSteps.map((step) => {
+              const active = activeStep === step.id
+              return (
+                <button
+                  key={step.id}
+                  onClick={() => setActiveStep(step.id)}
+                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-sans font-medium transition-all flex items-center justify-between ${
+                    active
+                      ? 'bg-[#171513] text-[#FAF6F0] font-bold shadow-xs'
+                      : 'text-[#6B5140] hover:bg-[#FAF6F0] hover:text-[#171513]'
+                  }`}
+                >
+                  <span className="truncate">{step.label}</span>
+                  {active && <Check className="w-3 h-3 text-[#A85D55]" />}
+                </button>
+              )
+            })}
+          </nav>
+
+          <div className="pt-3 border-t border-[rgba(107,81,64,0.1)]">
+            <Link
+              to="/practice?ref=|"
+              className="w-full btn-outline-ink text-xs py-2 flex items-center justify-center gap-1.5"
+            >
+              <Paintbrush className="w-3 h-3 text-[#A85D55]" />
+              <span>Launch Canvas</span>
+            </Link>
+          </div>
         </div>
 
-        <h1 className="text-3xl font-bold font-display text-neutral-100">
-          {lesson?.title}
-        </h1>
+        {/* Center Column (6 Cols): Main Workbook Demonstration Sheet */}
+        <div className="lg:col-span-6 paper-sheet p-6 sm:p-8 space-y-6 bg-[#FAF6F0] border border-[rgba(107,81,64,0.18)] shadow-md">
+          
+          <div className="space-y-1">
+            <span className="text-[10px] uppercase font-mono tracking-widest text-[#A85D55] font-bold">
+              Foundational Technique
+            </span>
+            <h1 className="text-3xl font-serif text-[#171513] font-normal">
+              Basic Strokes & Pressure Control
+            </h1>
+          </div>
 
-        <p className="text-sm text-neutral-300 leading-relaxed font-body">
-          {lesson?.explanation}
-        </p>
+          {/* Master Video / Pen Grip Demonstration Artwork Card */}
+          <div className="relative aspect-[16/10] rounded-2xl bg-[#171513] text-[#FAF6F0] p-6 flex flex-col justify-between overflow-hidden shadow-inner group">
+            {/* Subtle botanical backdrop */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-[#171513] via-[#302B27] to-[#6B5140]/30 opacity-90" />
+
+            <div className="relative z-10 flex items-center justify-between text-[10px] font-mono text-[#C4B5A5]">
+              <span>PEN ANGLE: 45°</span>
+              <span className="text-[#A85D55] font-bold">HD DEMO</span>
+            </div>
+
+            {/* Simulated Pen Grip & Calligraphy Stroke Visual */}
+            <div className="relative z-10 flex flex-col items-center justify-center my-auto text-center space-y-2">
+              <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 group-hover:scale-110 transition-transform cursor-pointer shadow-lg">
+                <Play className="w-6 h-6 fill-white text-white ml-0.5" />
+              </div>
+              <p className="text-xs font-serif italic text-[#FAF6F0]">
+                "Hold pen at 45° relative to the paper baseline"
+              </p>
+            </div>
+
+            <div className="relative z-10 flex justify-between text-[10px] font-mono text-[#C4B5A5]">
+              <span>Downward stroke: Exhale & press</span>
+              <span>Hairline: Feather touch</span>
+            </div>
+          </div>
+
+          {/* "Try These Strokes" Practice Drill Card */}
+          <div className="p-5 rounded-2xl bg-white border border-[rgba(107,81,64,0.15)] space-y-3">
+            <div className="flex items-center justify-between border-b border-[rgba(107,81,64,0.1)] pb-2">
+              <h4 className="text-xs font-serif font-bold text-[#171513]">
+                Try These Foundational Strokes:
+              </h4>
+              <span className="text-[10px] font-mono text-[#A85D55]">55° Slant Lines</span>
+            </div>
+
+            {/* Strokes Specimen Render */}
+            <div className="flex items-center justify-around py-3 font-serif text-3xl text-[#171513] select-none slant-55-pattern rounded-xl bg-[#FAF6F0] p-3 border border-[rgba(107,81,64,0.1)]">
+              <span className="font-light">/</span>
+              <span className="font-black text-4xl">|</span>
+              <span className="font-light">/</span>
+              <span className="font-black text-4xl">|</span>
+              <span className="font-light">/</span>
+              <span className="font-black text-4xl">|</span>
+            </div>
+
+            <p className="text-[11px] text-[#6B5140] font-sans leading-relaxed">
+              Alternate between feather-light upward hairlines (/) and slow deliberate downward shaded strokes (|). Keep the distance between each stroke uniform.
+            </p>
+          </div>
+
+          {/* Workbook Footer Note */}
+          <div className="pt-2 border-t border-[rgba(107,81,64,0.12)] flex items-center justify-between text-xs text-[#6B5140]">
+            <p className="font-serif italic">
+              "Practice makes permanent. Keep your strokes light and consistent."
+            </p>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => toast.success('Beginning previous stroke drill')}
+                className="btn-outline-ink text-[11px] py-1 px-3"
+              >
+                Previous
+              </button>
+              <button 
+                onClick={() => toast.success('Advanced to next stroke drill')}
+                className="btn-ink text-[11px] py-1 px-3"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Right Column (3 Cols): Checklist & Practice Task Launcher */}
+        <div className="lg:col-span-3 space-y-5">
+          
+          {/* "What You'll Learn" Card */}
+          <div className="paper-sheet p-5 space-y-3 bg-white border border-[rgba(107,81,64,0.16)]">
+            <h3 className="text-xs uppercase font-sans tracking-widest text-[#171513] font-bold border-b border-[rgba(107,81,64,0.1)] pb-2">
+              What You'll Learn
+            </h3>
+
+            <ul className="space-y-2.5 text-xs text-[#6B5140] font-sans">
+              {learningChecklist.map((item, idx) => (
+                <li key={idx} className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-[#A85D55] shrink-0 mt-0.5" />
+                  <span className="leading-tight">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Interactive Practice Task Launcher */}
+          <div className="paper-sheet p-5 space-y-4 bg-gradient-to-br from-[#F4E8E6] to-[#FAF6F0] border border-[#D8AFA9]">
+            <div className="space-y-1">
+              <span className="text-[10px] uppercase font-mono tracking-wider text-[#A85D55] font-bold">
+                Assigned Workbook Task
+              </span>
+              <h4 className="text-sm font-serif font-bold text-[#171513]">
+                10-Minute Downstroke Drill
+              </h4>
+              <p className="text-[11px] text-[#6B5140] leading-snug">
+                Draw 20 alternating hairlines and shaded downstrokes in the Practice Lab. Submit for AI slant and pressure scoring.
+              </p>
+            </div>
+
+            <button
+              onClick={() => navigate('/practice?ref=|')}
+              className="w-full btn-burgundy text-xs py-2.5 flex items-center justify-center gap-2 shadow-xs"
+            >
+              <span>Open in Practice Lab</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+        </div>
+
       </div>
 
-      {/* Learning Objectives Checklist */}
-      {lesson?.learningObjectives && lesson.learningObjectives.length > 0 && (
-        <div className="p-6 rounded-2xl bg-neutral-900/80 border border-amber-900/15 space-y-3">
-          <h3 className="text-xs uppercase font-mono tracking-wider text-amber-500 font-semibold flex items-center gap-1.5">
-            <Target className="w-4 h-4 text-amber-500" /> Learning Objectives
-          </h3>
-          <div className="space-y-2 pt-1">
-            {lesson.learningObjectives.map((obj, i) => (
-              <div key={i} className="flex items-start gap-2.5 text-xs text-neutral-300">
-                <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                <span>{obj}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Demonstration & Technique Steps */}
-      {lesson?.demonstration && (
-        <div className="p-6 rounded-2xl bg-neutral-900 border border-amber-900/20 space-y-4">
-          <div className="flex items-center justify-between border-b border-amber-900/10 pb-3">
-            <h3 className="text-xs uppercase font-mono tracking-wider text-amber-400 font-semibold flex items-center gap-1.5">
-              <Zap className="w-4 h-4 text-amber-500" /> Demonstration & Step-by-Step Execution
-            </h3>
-            {lesson.demonstration.penAngle && (
-              <span className="text-[10px] px-2 py-0.5 rounded bg-neutral-950 text-neutral-400 font-mono border border-neutral-800">
-                Recommended Pen Angle: {lesson.demonstration.penAngle}
-              </span>
-            )}
-          </div>
-
-          <div className="space-y-3">
-            {lesson.demonstration.steps?.map((step, idx) => (
-              <div key={idx} className="flex items-start gap-3 text-xs text-neutral-300">
-                <span className="w-6 h-6 rounded-lg bg-neutral-950 border border-amber-500/20 text-amber-400 font-mono flex items-center justify-center font-bold shrink-0">
-                  {idx + 1}
-                </span>
-                <span className="pt-0.5 leading-relaxed">{step}</span>
-              </div>
-            ))}
-          </div>
-
-          {lesson.demonstration.proTip && (
-            <div className="p-3.5 rounded-xl bg-amber-950/20 border border-amber-500/20 text-xs text-amber-300 flex items-start gap-2.5">
-              <Sparkles className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-              <div>
-                <strong className="font-semibold font-mono uppercase text-[10px] tracking-wider text-amber-400 block mb-0.5">Instructor Pro-Tip</strong>
-                {lesson.demonstration.proTip}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Practice Task Box */}
-      {lesson?.practiceTask && (
-        <div className="p-6 md:p-8 rounded-3xl bg-neutral-900 border-2 border-amber-500/30 relative overflow-hidden space-y-6 shadow-xl">
-          <div className="absolute right-0 bottom-0 w-48 h-48 bg-amber-500/10 rounded-full filter blur-3xl pointer-events-none" />
-
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-amber-900/20 pb-4">
-            <div>
-              <span className="text-[10px] uppercase font-mono tracking-widest text-amber-500 font-semibold">Practical Exercise</span>
-              <h3 className="text-xl font-bold font-display text-neutral-100">Ready to put pen to paper?</h3>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-neutral-400 font-mono">Target Score:</span>
-              <span className="text-xs font-bold text-amber-400 font-mono px-2 py-0.5 rounded bg-neutral-950 border border-amber-500/30">
-                {lesson.practiceTask.targetScore}+
-              </span>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <p className="text-xs text-neutral-300 leading-relaxed font-medium">
-              {lesson.practiceTask.taskPrompt}
-            </p>
-            <p className="text-[11px] text-neutral-400 italic">
-              Focus Metric: {lesson.practiceTask.focusMetric}
-            </p>
-          </div>
-
-          {/* Action CTAs */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
-            <button
-              onClick={handleLaunchPracticeLab}
-              className="btn btn-primary btn-sm w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 text-xs font-semibold shadow-gold"
-            >
-              <Paintbrush className="w-4 h-4" /> Practice in Interactive Lab
-            </button>
-
-            <button
-              onClick={handleCompleteLesson}
-              disabled={completing || isCompleted}
-              className={`btn btn-ghost btn-sm w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 text-xs font-semibold border ${
-                isCompleted 
-                  ? 'border-green-500/40 text-green-400 bg-green-500/10' 
-                  : 'hover:border-amber-500'
-              }`}
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              {isCompleted ? 'Completed ✓ (+20 XP)' : completing ? 'Recording...' : 'Mark Complete (+20 XP)'}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
