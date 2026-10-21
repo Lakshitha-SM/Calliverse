@@ -27,7 +27,7 @@ To adhere strictly to final-year academic engineering standards, all test cases 
 
 ```tap
 > backend@1.0.0 test
-> node --test tests/**/*.test.js
+> node --test
 
 TAP version 13
 # Subtest: CalliVision AI Assessment Engine Tests
@@ -100,7 +100,7 @@ ok 2 - CalliLab Backend Module and Route Integrity Tests
 
 ```tap
 > frontend@0.0.0 test
-> node --test tests/**/*.test.js
+> node --test
 
 TAP version 13
 # Subtest: Frontend Calligraphy Skill Radar Geometry Tests
